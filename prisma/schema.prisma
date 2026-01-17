@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions Session[]
+  assessments Assessment[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt  DateTime @default(now())
+  lastActive DateTime @default(now())
+  isActive   Boolean  @default(true)
+
+  assessments Assessment[]
+
+  @@map("sessions")
+}
+
+model Assessment {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String?
+  session     Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  status      String   @default("in_progress") // in_progress, completed, paused
+  progress    Int      @default(0) // 0-100
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  completedAt DateTime?
+
+  answers Answer[]
+  scores  Score[]
+
+  @@map("assessments")
+}
+
+model QuestionCategory {
+  id          String     @id @default(uuid())
+  name        String     @unique // governance, strategy, risk, metrics
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  questions Question[]
+
+  @@map("question_categories")
+}
+
+model Question {
+  id          String   @id @default(uuid())
+  categoryId  String
+  category    QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  text        String
+  type        String   @default("text") // text, multiple_choice, yes_no, scale
+  options     String?  // JSON string for multiple choice options
+  ifrsStandard String  // S1 or S2
+  requirement String?  // Specific IFRS requirement reference
+  weight      Float    @default(1.0) // Importance weight for scoring
+  order       Int      @default(0) // Display order
+  phase       String   @default("quick") // quick, detailed, followup
+  isActive    Boolean  @default(true)
+  skipLogic   String?  // JSON string for conditional logic
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  answers Answer[]
+
+  @@map("questions")
+}
+
+model Answer {
+  id           String   @id @default(uuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  value        String   // JSON string or text value
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("answers")
+}
+
+model Score {
+  id           String   @id @default(uuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  category     String   // governance, strategy, risk, metrics
+  score        Float    // 0-100
+  maxScore     Float    @default(100)
+  createdAt    DateTime @default(now())
+
+  @@map("scores")
+}
