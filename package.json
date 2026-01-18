@@ -15,11 +15,16 @@
     "test:auth": "tsx scripts/testAuth.ts",
     "migrate:vector-db": "tsx src/scripts/migrateVectorDB.ts",
     "ingest:ifrs-docs": "tsx src/scripts/ingestIFRSDocuments.ts",
+    "ingest:bulk-urls": "tsx src/scripts/ingestBulkURLs.ts",
     "test:integration": "tsx src/scripts/runIntegrationTests.ts",
     "test:rag": "tsx src/scripts/runRAGTests.ts",
     "debug:rag": "tsx src/scripts/tests/debugRAGTest.ts",
     "test:scope": "tsx src/scripts/testBotScope.ts",
-    "test:scraping": "tsx src/scripts/testScraping.ts"
+    "test:scraping": "tsx src/scripts/testScraping.ts",
+    "test:phase1": "tsx src/scripts/testPhase1Features.ts",
+    "test:phase3": "tsx src/scripts/testAssessmentPhase3.ts",
+    "test:dashboard": "tsx src/scripts/testDashboardIntegration.ts",
+    "test:phase4": "tsx src/scripts/testDashboardPhase4.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

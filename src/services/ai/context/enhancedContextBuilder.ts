@@ -247,4 +247,222 @@ export class EnhancedContextBuilder {
       answersProvided,
     };
   }
+
+  /**
+   * Summarize conversation context for long conversations
+   */
+  async summarizeContext(messages: Message[], maxLength: number = 500): Promise<string> {
+    if (messages.length === 0) {
+      return '';
+    }
+
+    // Extract key information
+    const keyInfo = this.extractKeyInformation(messages);
+    const extractedContext = this.extractContext(messages);
+
+    // Build summary from key information
+    let summary = 'Previous conversation summary: ';
+
+    // Add topics
+    if (keyInfo.topics.length > 0) {
+      summary += `Topics discussed: ${keyInfo.topics.join(', ')}. `;
+    }
+
+    // Add IFRS standard
+    if (extractedContext.ifrsStandard) {
+      summary += `Focus on IFRS ${extractedContext.ifrsStandard}. `;
+    }
+
+    // Add assessment phase if applicable
+    if (extractedContext.assessmentPhase) {
+      summary += `Assessment phase: ${extractedContext.assessmentPhase}. `;
+    }
+
+    // Add user intent
+    if (extractedContext.userIntent) {
+      summary += `User intent: ${extractedContext.userIntent.replace(/_/g, ' ')}. `;
+    }
+
+    // Add message count
+    summary += `Total messages in conversation: ${messages.length}. `;
+
+    // Add progress if available
+    if (extractedContext.assessmentProgress > 0) {
+      summary += `Assessment progress: ${extractedContext.assessmentProgress}%. `;
+    }
+
+    // Extract key questions and answers (first few)
+    const userMessages = messages.filter(msg => msg.role === 'user').slice(0, 3);
+    const assistantMessages = messages.filter(msg => msg.role === 'assistant').slice(0, 3);
+
+    if (userMessages.length > 0 || assistantMessages.length > 0) {
+      summary += 'Key points: ';
+      
+      userMessages.forEach((msg, idx) => {
+        const shortContent = msg.content.substring(0, 100);
+        summary += `Q${idx + 1}: ${shortContent}${shortContent.length < msg.content.length ? '...' : ''}. `;
+      });
+
+      assistantMessages.forEach((msg, idx) => {
+        const shortContent = msg.content.substring(0, 100);
+        summary += `A${idx + 1}: ${shortContent}${shortContent.length < msg.content.length ? '...' : ''}. `;
+      });
+    }
+
+    // Truncate if too long
+    if (summary.length > maxLength) {
+      summary = summary.substring(0, maxLength - 3) + '...';
+    }
+
+    return summary.trim();
+  }
+
+  /**
+   * Smart context pruning algorithm
+   * Keeps most relevant messages while removing redundant or less important ones
+   */
+  pruneContext(
+    messages: Message[],
+    maxMessages: number = 50,
+    options: {
+      keepSystemMessages?: boolean;
+      keepRecentMessages?: number;
+      prioritizeUserMessages?: boolean;
+    } = {}
+  ): Message[] {
+    const {
+      keepSystemMessages = true,
+      keepRecentMessages = 10,
+      prioritizeUserMessages = true,
+    } = options;
+
+    if (messages.length <= maxMessages) {
+      return messages;
+    }
+
+    // Separate system messages
+    const systemMessages = keepSystemMessages
+      ? messages.filter(msg => msg.role === 'system')
+      : [];
+
+    const conversationMessages = messages.filter(msg => msg.role !== 'system');
+
+    // Always keep recent messages
+    const recentMessages = conversationMessages.slice(-keepRecentMessages);
+
+    // Messages to consider for pruning (older messages)
+    const olderMessages = conversationMessages.slice(0, -keepRecentMessages);
+
+    // Prioritize user messages if enabled
+    if (prioritizeUserMessages && olderMessages.length > 0) {
+      const userMessages = olderMessages.filter(msg => msg.role === 'user');
+      const assistantMessages = olderMessages.filter(msg => msg.role === 'assistant');
+
+      // Keep more user messages relative to assistant messages
+      const userRatio = 0.6; // 60% user, 40% assistant
+      const maxOlderMessages = maxMessages - keepRecentMessages - systemMessages.length;
+      const maxUserMessages = Math.floor(maxOlderMessages * userRatio);
+      const maxAssistantMessages = maxOlderMessages - maxUserMessages;
+
+      // Select diverse user messages (avoid duplicates)
+      const selectedUserMessages = this.selectDiverseMessages(userMessages, maxUserMessages);
+      
+      // Select diverse assistant messages
+      const selectedAssistantMessages = this.selectDiverseMessages(assistantMessages, maxAssistantMessages);
+
+      // Combine and sort by original order
+      const selectedOlder = [...selectedUserMessages, ...selectedAssistantMessages]
+        .sort((a, b) => {
+          const aIndex = olderMessages.indexOf(a);
+          const bIndex = olderMessages.indexOf(b);
+          return aIndex - bIndex;
+        });
+
+      return [...systemMessages, ...selectedOlder, ...recentMessages];
+    }
+
+    // Simple truncation if prioritization is disabled
+    const messagesToKeep = Math.max(0, maxMessages - keepRecentMessages - systemMessages.length);
+    const selectedOlder = olderMessages.slice(-messagesToKeep);
+
+    return [...systemMessages, ...selectedOlder, ...recentMessages];
+  }
+
+  /**
+   * Select diverse messages to avoid redundancy
+   */
+  private selectDiverseMessages(messages: Message[], maxCount: number): Message[] {
+    if (messages.length <= maxCount) {
+      return messages;
+    }
+
+    // Simple diversity: select evenly spaced messages
+    const step = Math.floor(messages.length / maxCount);
+    const selected: Message[] = [];
+
+    for (let i = 0; i < messages.length && selected.length < maxCount; i += step) {
+      selected.push(messages[i]);
+    }
+
+    // Ensure we have maxCount messages
+    if (selected.length < maxCount) {
+      const remaining = messages.filter(msg => !selected.includes(msg));
+      selected.push(...remaining.slice(0, maxCount - selected.length));
+    }
+
+    return selected;
+  }
+
+  /**
+   * Build pruned and summarized context for AI
+   */
+  async buildPrunedContext(
+    messages: Message[],
+    maxMessages: number = 50,
+    enableSummarization: boolean = true,
+    summaryThreshold: number = 30
+  ): Promise<{
+    messages: Message[];
+    summary?: string;
+    originalCount: number;
+    prunedCount: number;
+  }> {
+    const originalCount = messages.length;
+
+    // Summarize old messages if threshold exceeded and summarization enabled
+    let summary: string | undefined;
+    let messagesToPrune = messages;
+
+    if (enableSummarization && messages.length > summaryThreshold) {
+      const systemMessages = messages.filter(msg => msg.role === 'system');
+      const conversationMessages = messages.filter(msg => msg.role !== 'system');
+      
+      // Messages to summarize (older messages)
+      const messagesToSummarize = conversationMessages.slice(0, -10); // Keep last 10
+      const messagesToKeep = conversationMessages.slice(-10); // Recent messages
+
+      if (messagesToSummarize.length > 0) {
+        summary = await this.summarizeContext(messagesToSummarize);
+        messagesToPrune = [...systemMessages, ...messagesToKeep];
+      }
+    }
+
+    // Prune context
+    const prunedMessages = this.pruneContext(messagesToPrune, maxMessages);
+
+    // Prepend summary if available
+    if (summary) {
+      prunedMessages.unshift({
+        role: 'system',
+        content: summary,
+      });
+    }
+
+    return {
+      messages: prunedMessages,
+      summary,
+      originalCount,
+      prunedCount: prunedMessages.length,
+    };
+  }
 }

@@ -9,6 +9,7 @@ import uploadRoutes from './upload';
 import scrapingRoutes from './scraping';
 import authRoutes from './auth';
 import adminRoutes from './admin';
+import dashboardRoutes from './dashboard';
 
 export const setupRoutes = (app: Express): void => {
   // Authentication API routes
@@ -40,4 +41,7 @@ export const setupRoutes = (app: Express): void => {
   
   // Scraping API routes
   app.use('/api/scraping', scrapingRoutes);
+  
+  // Dashboard API routes
+  app.use('/api/dashboard', dashboardRoutes);
 };
