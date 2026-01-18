@@ -1,0 +1,25 @@
+IFRS S1: General Requirements for Disclosure of Sustainability-related Financial Information
+
+Overview:
+IFRS S1 establishes the general requirements for disclosure of sustainability-related financial information. It provides a comprehensive framework for entities to report on sustainability-related risks and opportunities.
+
+Key Requirements:
+1. An entity must disclose material information about sustainability-related risks and opportunities that could reasonably be expected to affect the entity's prospects.
+2. Information must be disclosed alongside related financial statements for the same reporting period.
+3. Disclosures must be structured using the four pillars: governance, strategy, risk management, and metrics and targets.
+4. The entity must apply judgment to determine what information is material.
+
+Relationship with IFRS S2:
+IFRS S1 provides the overarching framework and general requirements for all sustainability disclosures. IFRS S2 (Climate-related Disclosures) is a specific application of IFRS S1's principles, focusing specifically on climate-related risks and opportunities. IFRS S2 builds upon and supplements the general requirements in IFRS S1.
+
+Governance Requirements:
+An entity must disclose the governance processes, controls, and procedures it uses to monitor and manage sustainability-related risks and opportunities.
+
+Strategy Requirements:
+An entity must disclose how sustainability-related risks and opportunities are integrated into its strategy and business model.
+
+Risk Management Requirements:
+An entity must disclose the processes it uses to identify, assess, and manage sustainability-related risks and opportunities.
+
+Metrics and Targets Requirements:
+An entity must disclose the metrics and targets it uses to measure and monitor sustainability-related risks and opportunities.

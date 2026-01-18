@@ -1,0 +1,32 @@
+IFRS S2: Climate-related Disclosures
+
+Overview:
+IFRS S2 requires an entity to disclose information about climate-related risks and opportunities that could reasonably be expected to affect the entity's cash flows, its access to finance, or cost of capital over the short, medium, or long term.
+
+Key Requirements:
+1. An entity must disclose material information about climate-related physical risks and transition risks.
+2. Information about climate-related opportunities must be disclosed when material.
+3. Disclosures must follow the four pillars structure established in IFRS S1: governance, strategy, risk management, and metrics and targets.
+4. The entity must disclose its climate-related targets and progress toward meeting those targets.
+
+Relationship with IFRS S1:
+IFRS S2 is a specific application of IFRS S1's general requirements. It focuses specifically on climate-related disclosures while applying the same four-pillar structure and materiality concepts from IFRS S1. Entities must comply with both IFRS S1 and IFRS S2 when disclosing climate-related information.
+
+Climate-Related Risks:
+An entity must disclose information about:
+- Physical risks (acute and chronic)
+- Transition risks (policy, legal, technology, market, and reputational risks)
+- How these risks affect the entity's strategy and business model
+
+Climate-Related Opportunities:
+An entity must disclose information about climate-related opportunities when material, such as:
+- Resource efficiency
+- Energy sources
+- Products, services, and markets
+- Resilience
+
+Metrics and Targets:
+An entity must disclose:
+- Scope 1, Scope 2, and Scope 3 greenhouse gas emissions
+- Climate-related targets and how they relate to broader climate goals
+- Progress toward meeting climate-related targets

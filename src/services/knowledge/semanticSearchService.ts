@@ -171,58 +171,232 @@ export class SemanticSearchService {
 
   /**
    * Hybrid search: combine semantic and keyword search
+   * Enhanced implementation with better ranking and keyword extraction
    */
   async hybridSearch(
     query: string,
     topK: number = 10,
     semanticWeight: number = 0.7,
-    keywordWeight: number = 0.3
+    keywordWeight: number = 0.3,
+    filter?: {
+      documentId?: string;
+      section?: string;
+      source?: string;
+    }
   ): Promise<SearchResponse> {
-    // Perform semantic search
-    const semanticResults = await this.search({ query, topK: topK * 2 });
+    const startTime = Date.now();
 
-    // Perform keyword search (simple text matching)
-    const keywordResults = this.keywordSearch(semanticResults.results, query);
+    // Normalize weights to ensure they sum to 1
+    const totalWeight = semanticWeight + keywordWeight;
+    const normalizedSemanticWeight = semanticWeight / totalWeight;
+    const normalizedKeywordWeight = keywordWeight / totalWeight;
 
-    // Combine results with weighted scores
+    // Step 1: Perform semantic search
+    const semanticResults = await this.search({
+      query,
+      topK: topK * 2, // Get more results for better keyword matching
+      filter,
+    });
+
+    // Step 2: Perform keyword search on all available vectors
+    const keywordResults = await this.performKeywordSearch(query, filter, topK * 2);
+
+    // Step 3: Combine results with weighted scores
     const combinedResults = new Map<string, SearchResult>();
 
-    // Add semantic results with weight
+    // Add semantic results with normalized weight
     for (const result of semanticResults.results) {
       const existing = combinedResults.get(result.id);
       if (existing) {
-        existing.score = existing.score * keywordWeight + result.score * semanticWeight;
+        // Average weighted score
+        existing.score = existing.score + (result.score * normalizedSemanticWeight);
       } else {
         combinedResults.set(result.id, {
           ...result,
-          score: result.score * semanticWeight,
+          score: result.score * normalizedSemanticWeight,
         });
       }
     }
 
-    // Add keyword results with weight
+    // Add keyword results with normalized weight
     for (const result of keywordResults) {
       const existing = combinedResults.get(result.id);
       if (existing) {
-        existing.score = existing.score + result.score * keywordWeight;
+        // Combine scores: weighted average
+        existing.score = existing.score + (result.score * normalizedKeywordWeight);
       } else {
         combinedResults.set(result.id, {
           ...result,
-          score: result.score * keywordWeight,
+          score: result.score * normalizedKeywordWeight,
         });
       }
     }
 
-    // Sort by combined score
-    const rankedResults = Array.from(combinedResults.values())
+    // Step 4: Apply additional ranking factors
+    const rankedResults = this.rankHybridResults(
+      Array.from(combinedResults.values()),
+      query
+    )
       .sort((a, b) => b.score - a.score)
       .slice(0, topK);
+
+    const processingTime = Date.now() - startTime;
 
     return {
       results: rankedResults,
       totalResults: rankedResults.length,
       query,
+      processingTimeMs: processingTime,
     };
+  }
+
+  /**
+   * Perform keyword search across all vectors
+   * Enhanced implementation with better keyword matching
+   */
+  private async performKeywordSearch(
+    query: string,
+    filter?: {
+      documentId?: string;
+      section?: string;
+      source?: string;
+    },
+    topK: number = 10
+  ): Promise<SearchResult[]> {
+    // Extract meaningful keywords (filter out stop words, short words)
+    const keywords = this.extractKeywords(query);
+    
+    if (keywords.length === 0) {
+      return [];
+    }
+
+    // Get all vectors from database (this might need optimization for large datasets)
+    // For now, we'll search semantically and then filter by keywords
+    const semanticResults = await this.search({
+      query,
+      topK: topK * 3, // Get more candidates for keyword filtering
+      filter,
+    });
+
+    // Score results based on keyword matches
+    const keywordResults = semanticResults.results.map(result => {
+      const textContent = `${result.text} ${result.metadata.title || ''} ${result.metadata.section || ''}`.toLowerCase();
+      
+      let matchScore = 0;
+      let exactMatches = 0;
+      let partialMatches = 0;
+
+      for (const keyword of keywords) {
+        const keywordLower = keyword.toLowerCase();
+        
+        // Exact match (full word)
+        const exactMatchRegex = new RegExp(`\\b${keywordLower}\\b`, 'gi');
+        if (exactMatchRegex.test(textContent)) {
+          exactMatches++;
+          matchScore += 2; // Higher weight for exact matches
+        }
+        // Partial match
+        else if (textContent.includes(keywordLower)) {
+          partialMatches++;
+          matchScore += 1; // Lower weight for partial matches
+        }
+      }
+
+      // Normalize score based on number of keywords
+      const normalizedScore = matchScore / (keywords.length * 2);
+
+      return {
+        ...result,
+        score: normalizedScore,
+      };
+    });
+
+    // Filter out results with no matches and sort by score
+    return keywordResults
+      .filter(result => result.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK);
+  }
+
+  /**
+   * Extract meaningful keywords from query
+   */
+  private extractKeywords(query: string): string[] {
+    // Common stop words to filter out
+    const stopWords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+      'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+      'should', 'could', 'may', 'might', 'must', 'can', 'this', 'that',
+      'these', 'those', 'what', 'which', 'who', 'whom', 'whose', 'where',
+      'when', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more',
+      'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own',
+      'same', 'so', 'than', 'too', 'very', 'just', 'about', 'into', 'through',
+      'during', 'before', 'after', 'above', 'below', 'up', 'down', 'out',
+      'off', 'over', 'under', 'again', 'further', 'then', 'once',
+    ]);
+
+    // Split query into words and filter
+    const words = query
+      .toLowerCase()
+      .split(/\s+/)
+      .map(word => word.replace(/[^\w]/g, '')) // Remove punctuation
+      .filter(word => word.length > 2) // Keep words longer than 2 characters
+      .filter(word => !stopWords.has(word)); // Remove stop words
+
+    // Remove duplicates and return
+    return Array.from(new Set(words));
+  }
+
+  /**
+   * Enhanced ranking for hybrid search results
+   */
+  private rankHybridResults(results: SearchResult[], query: string): SearchResult[] {
+    const queryLower = query.toLowerCase();
+    const keywords = this.extractKeywords(query);
+
+    return results.map(result => {
+      let boost = 1.0;
+      const textLower = result.text.toLowerCase();
+      const titleLower = result.metadata.title?.toLowerCase() || '';
+
+      // Boost for title matches (strong signal)
+      for (const keyword of keywords) {
+        if (titleLower.includes(keyword)) {
+          boost += 0.3;
+        }
+      }
+
+      // Boost for exact phrase matches
+      if (textLower.includes(queryLower)) {
+        boost += 0.4;
+      }
+
+      // Boost for section relevance
+      if (result.metadata.section) {
+        const sectionLower = result.metadata.section.toLowerCase();
+        for (const keyword of keywords) {
+          if (sectionLower.includes(keyword)) {
+            boost += 0.2;
+          }
+        }
+      }
+
+      // Boost for source relevance (if source matches query context)
+      if (result.metadata.source && queryLower.includes(result.metadata.source.toLowerCase())) {
+        boost += 0.15;
+      }
+
+      // Decay for low semantic similarity scores
+      if (result.score < 0.5) {
+        boost *= 0.8;
+      }
+
+      return {
+        ...result,
+        score: result.score * Math.min(boost, 2.0), // Cap boost at 2x
+      };
+    });
   }
 
   /**

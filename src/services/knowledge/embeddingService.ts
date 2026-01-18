@@ -172,16 +172,20 @@ export class EmbeddingService {
    * For now, creates a basic feature vector based on text characteristics
    */
   private generateSimpleEmbedding(text: string): number[] {
-    // Simple embedding: 384 dimensions (common embedding size)
+    // Get embedding dimension from environment or use default
+    const dimension = parseInt(process.env.EMBEDDING_DIMENSION || '768', 10);
+    
+    // Simple embedding: matches configured dimension (default 768 for Pinecone)
     // In production, replace with actual Gemini embedding API
-    const embedding: number[] = new Array(384).fill(0);
+    const embedding: number[] = new Array(dimension).fill(0);
     
     const words = text.toLowerCase().split(/\s+/);
     const wordCount = words.length;
     const charCount = text.length;
     
     // Simple hash-based embedding (placeholder)
-    for (let i = 0; i < words.length && i < 384; i++) {
+    const maxWords = Math.min(words.length, dimension - 4); // Reserve last 4 for document-level features
+    for (let i = 0; i < maxWords; i++) {
       let hash = 0;
       for (let j = 0; j < words[i].length; j++) {
         hash = ((hash << 5) - hash) + words[i].charCodeAt(j);
@@ -190,11 +194,12 @@ export class EmbeddingService {
       embedding[i] = (hash % 1000) / 1000; // Normalize to -1 to 1
     }
 
-    // Add document-level features
-    embedding[380] = Math.min(wordCount / 1000, 1); // Word count feature
-    embedding[381] = Math.min(charCount / 10000, 1); // Character count feature
-    embedding[382] = text.includes('IFRS') ? 1 : 0; // IFRS mention
-    embedding[383] = text.includes('S1') || text.includes('S2') ? 1 : 0; // Standard mention
+    // Add document-level features at the end
+    const lastIndex = dimension - 1;
+    embedding[lastIndex - 3] = Math.min(wordCount / 1000, 1); // Word count feature
+    embedding[lastIndex - 2] = Math.min(charCount / 10000, 1); // Character count feature
+    embedding[lastIndex - 1] = text.includes('IFRS') ? 1 : 0; // IFRS mention
+    embedding[lastIndex] = text.includes('S1') || text.includes('S2') ? 1 : 0; // Standard mention
 
     return embedding;
   }

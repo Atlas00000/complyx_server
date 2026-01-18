@@ -11,14 +11,27 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String?
+  passwordHash      String?   // Nullable for OAuth users
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  verificationToken String?   @unique
+  resetToken        String?   @unique
+  resetTokenExpires DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
 
-  sessions Session[]
-  assessments Assessment[]
+  // Relations
+  organizationId    String?
+  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  roleId             String?
+  role               Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  sessions           Session[]
+  assessments        Assessment[]
+  auditLogs          AuditLog[]
 
   @@map("users")
 }
@@ -111,4 +124,81 @@ model Score {
   createdAt    DateTime @default(now())
 
   @@map("scores")
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users      User[]
+  auditLogs  AuditLog[]
+
+  @@map("organizations")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // Admin, Manager, User, Viewer
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., "users:create", "assessments:read", "admin:access"
+  description String?
+  resource    String   // users, assessments, admin, content
+  action      String   // create, read, update, delete, access
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organizationId String?
+  organization  Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  action        String   // create, update, delete, login, logout, etc.
+  resource      String   // user, assessment, content, etc.
+  resourceId    String?  // ID of the affected resource
+  details       String?  // JSON string with additional details
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([organizationId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
 }
