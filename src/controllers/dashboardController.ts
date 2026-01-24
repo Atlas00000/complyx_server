@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
-import { ScoringService, AssessmentScore } from '../services/assessment/scoringService';
+import { ScoringService } from '../services/assessment/scoringService';
 import { ProgressService, ProgressData } from '../services/assessment/progressService';
 import { GapIdentificationService, GapAnalysis } from '../services/compliance/gapIdentificationService';
 import { ComplianceMatrixService, ComplianceMatrix } from '../services/compliance/complianceMatrixService';

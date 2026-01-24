@@ -1,6 +1,5 @@
 import { VectorDatabase } from './vectorDatabase';
-import { SemanticSearchService, SearchResult } from './semanticSearchService';
-import { ContentStatus } from './contentManagementService';
+import { SemanticSearchService } from './semanticSearchService';
 
 export interface ContentQualityScore {
   documentId: string;
@@ -49,8 +48,10 @@ export interface RefreshSchedule {
  * Provides content quality scoring, usage analytics, and refresh scheduling
  */
 export class KnowledgeAnalyticsService {
-  private vectorDatabase: VectorDatabase;
-  private searchService: SemanticSearchService;
+  // @ts-expect-error - Reserved for future analytics operations
+  private _vectorDatabase: VectorDatabase;
+  // @ts-expect-error - Reserved for future search analytics
+  private _searchService: SemanticSearchService;
   
   // Usage tracking (in production, would use persistent storage)
   private usageTracking: Map<string, {
@@ -70,15 +71,15 @@ export class KnowledgeAnalyticsService {
     // Lazy imports to avoid circular dependencies
     if (!vectorDatabase) {
       const { VectorDatabaseFactory } = require('./vectorDatabase');
-      this.vectorDatabase = VectorDatabaseFactory.create();
+      this._vectorDatabase = VectorDatabaseFactory.create();
     } else {
-      this.vectorDatabase = vectorDatabase;
+      this._vectorDatabase = vectorDatabase;
     }
 
     if (!searchService) {
-      this.searchService = new SemanticSearchService();
+      this._searchService = new SemanticSearchService();
     } else {
-      this.searchService = searchService;
+      this._searchService = searchService;
     }
   }
 

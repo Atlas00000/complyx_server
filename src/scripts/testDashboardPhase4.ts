@@ -307,7 +307,7 @@ async function testDashboardEndpoints(userId: string, assessmentId: string): Pro
   return endpointTests;
 }
 
-async function testCalculations(userId: string, assessmentId: string): Promise<TestResult[]> {
+async function testCalculations(_userId: string, assessmentId: string): Promise<TestResult[]> {
   const calculationTests: TestResult[] = [];
 
   // Get assessment with answers
@@ -399,7 +399,7 @@ async function testCalculations(userId: string, assessmentId: string): Promise<T
   return calculationTests;
 }
 
-async function testUpdates(userId: string, assessmentId: string): Promise<TestResult[]> {
+async function testUpdates(_userId: string, assessmentId: string): Promise<TestResult[]> {
   const updateTests: TestResult[] = [];
 
   // Get current assessment state

@@ -4,7 +4,7 @@
  * AI asks clarifying questions when answers are unclear
  */
 
-import type { AssessmentContext, AnswerData, QuestionNode, FlowDecision } from './assessmentFlowEngine';
+import type { AssessmentContext, AnswerData, QuestionNode } from './assessmentFlowEngine';
 import { AssessmentFlowEngine } from './assessmentFlowEngine';
 
 export interface ConversationMessage {
@@ -144,7 +144,7 @@ export class ConversationalAssessmentService {
     
     if (!validation.valid) {
       // Request clarification
-      const clarification = this.requestClarification(questionId, question, validation.reason);
+      const clarification = this.requestClarification(questionId, question, validation.reason || 'unclear');
       state.clarifications.push(clarification);
       
       // Clear awaiting answer
@@ -203,7 +203,7 @@ export class ConversationalAssessmentService {
    * Generate next question in conversation flow
    */
   private async generateNextQuestion(
-    sessionId: string,
+    _sessionId: string,
     state: ConversationState
   ): Promise<{
     response: string;
@@ -254,7 +254,7 @@ export class ConversationalAssessmentService {
    * Generate conversational response (not a question)
    */
   private async generateConversationalResponse(
-    sessionId: string,
+    _sessionId: string,
     message: string,
     state: ConversationState
   ): Promise<{
@@ -491,7 +491,7 @@ export class ConversationalAssessmentService {
   /**
    * Generate acknowledgment for answer
    */
-  private generateAcknowledgment(answer: AnswerData, question: QuestionNode): string {
+  private generateAcknowledgment(_answer: AnswerData, _question: QuestionNode): string {
     // Simple acknowledgment
     const acknowledgments = [
       'Got it, thanks!',
@@ -532,7 +532,7 @@ export class ConversationalAssessmentService {
   /**
    * Generate natural conversational response
    */
-  private generateNaturalResponse(message: string, state: ConversationState): string {
+  private generateNaturalResponse(message: string, _state: ConversationState): string {
     const messageLower = message.toLowerCase();
 
     // Handle common conversational patterns

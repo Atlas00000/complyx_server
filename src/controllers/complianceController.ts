@@ -100,7 +100,7 @@ export class ComplianceController {
    */
   async getIndustries(_req: Request, res: Response): Promise<void> {
     try {
-      const industries = this.industryVariationsService.getSupportedIndustries();
+      const industries = this.industryVariationsService.getAllIndustries();
       res.json({ industries });
     } catch (error) {
       console.error('Error getting industries:', error);

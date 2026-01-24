@@ -288,8 +288,9 @@ export class QuestionService {
       }
 
       // Mode-based priority adjustment
-      if (mode === 'quick-scan' && question.priority !== 'high') {
-        priorityScore *= 0.7; // Reduce priority for non-high questions in quick scan
+      // Note: Priority is determined by score, not a direct property
+      if (mode === 'quick-scan' && priorityScore < 50) {
+        priorityScore *= 0.7; // Reduce priority for lower-scored questions in quick scan
       }
 
       // Determine priority level

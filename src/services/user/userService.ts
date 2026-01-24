@@ -448,7 +448,7 @@ export class UserService {
   /**
    * Get user preferences
    */
-  async getUserPreferences(userId: string): Promise<Record<string, any>> {
+  async getUserPreferences(_userId: string): Promise<Record<string, any>> {
     // Placeholder - to be implemented when preferences are added to schema
     return {};
   }

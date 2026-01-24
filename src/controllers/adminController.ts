@@ -43,7 +43,7 @@ export class AdminController {
   /**
    * Get admin dashboard statistics
    */
-  async getStats(req: Request, res: Response): Promise<void> {
+  async getStats(_req: Request, res: Response): Promise<void> {
     try {
       const stats = await adminService.getAdminStats();
       res.json(stats);
@@ -206,7 +206,7 @@ export class AdminController {
   /**
    * Get system analytics
    */
-  async getAnalytics(req: Request, res: Response): Promise<void> {
+  async getAnalytics(_req: Request, res: Response): Promise<void> {
     try {
       const analytics = await adminService.getSystemAnalytics();
       res.json(analytics);

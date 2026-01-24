@@ -1,6 +1,6 @@
 import { URLFetcherService, URLFetchResult } from './urlFetcherService';
-import { HTMLParserService, HTMLParseResult } from './htmlParserService';
-import { PDFParserService, PDFParseResult } from './pdfParserService';
+import { HTMLParserService } from './htmlParserService';
+import { PDFParserService } from './pdfParserService';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -85,7 +85,7 @@ export class URLParserService {
   private async parsePDFFromBuffer(
     fetchResult: URLFetchResult,
     url: string,
-    options: URLParseOptions
+    _options: URLParseOptions
   ): Promise<URLParseResult> {
     // Save buffer to temporary file for PDF parser
     const tempFilePath = path.join(this.tempDir, `pdf-${Date.now()}-${Math.random().toString(36).substring(7)}.pdf`);
@@ -166,7 +166,7 @@ export class URLParserService {
   private parseTextFromBuffer(
     fetchResult: URLFetchResult,
     url: string,
-    options: URLParseOptions
+    _options: URLParseOptions
   ): Promise<URLParseResult> {
     const text = fetchResult.content.toString('utf-8');
 

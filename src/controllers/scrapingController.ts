@@ -86,7 +86,7 @@ export class ScrapingController {
    * GET /api/scraping/feeds
    * Get all registered feeds
    */
-  async getFeeds(req: Request, res: Response): Promise<void> {
+  async getFeeds(_req: Request, res: Response): Promise<void> {
     try {
       const feeds = scrapingSchedulerService.getFeeds();
       const stats = scrapingSchedulerService.getStatistics();
@@ -236,7 +236,7 @@ export class ScrapingController {
    * POST /api/scraping/process-all
    * Manually trigger processing of all enabled feeds
    */
-  async processAllFeeds(req: Request, res: Response): Promise<void> {
+  async processAllFeeds(_req: Request, res: Response): Promise<void> {
     try {
       console.log('📡 Manual trigger: Processing all enabled feeds');
       const results = await scrapingSchedulerService.processAllFeeds();
@@ -272,7 +272,7 @@ export class ScrapingController {
    * GET /api/scraping/statistics
    * Get scraping statistics
    */
-  async getStatistics(req: Request, res: Response): Promise<void> {
+  async getStatistics(_req: Request, res: Response): Promise<void> {
     try {
       const stats = scrapingSchedulerService.getStatistics();
       const feeds = scrapingSchedulerService.getFeeds();

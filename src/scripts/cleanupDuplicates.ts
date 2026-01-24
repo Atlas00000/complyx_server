@@ -28,7 +28,7 @@ async function cleanupDuplicates() {
     let duplicatesRemoved = 0;
     const duplicatesToDelete: string[] = [];
 
-    for (const [key, questions] of questionGroups.entries()) {
+    for (const [_key, questions] of questionGroups.entries()) {
       if (questions.length > 1) {
         console.log(`Found ${questions.length} duplicates for: ${questions[0].text.substring(0, 60)}...`);
         

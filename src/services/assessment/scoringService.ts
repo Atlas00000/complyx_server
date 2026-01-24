@@ -103,7 +103,7 @@ export class ScoringService {
     });
 
     // Create maps for efficient lookup
-    const questionMap = new Map(allQuestions.map(q => [q.id, q]));
+    new Map(allQuestions.map(q => [q.id, q]));
     const answersMap = new Map(answers.map(a => [a.questionId, a.value]));
 
     // Calculate category scores

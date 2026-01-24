@@ -227,7 +227,7 @@ export class ConversationStateService {
     sessionId: string,
     userId: string,
     baseMessages: Message[],
-    conversationHistory: Message[]
+    _conversationHistory: Message[]
   ): Message[] {
     const { state, contextHints } = this.getContextForResponse(sessionId, userId);
 
@@ -267,7 +267,7 @@ ${state.followUpHistory.length > 0 && state.followUpHistory[state.followUpHistor
    * Get state transition history (for debugging/analytics)
    */
   getStateTransition(
-    sessionId: string,
+    _sessionId: string,
     oldPhase: ConversationState['conversationPhase'],
     newPhase: ConversationState['conversationPhase']
   ): StateTransition {

@@ -1,5 +1,5 @@
-import { VectorDatabase, VectorEmbedding, MetadataFilter } from './vectorDatabase';
-import { EmbeddingService, DocumentChunk } from './embeddingService';
+import { VectorDatabase, VectorEmbedding } from './vectorDatabase';
+import { EmbeddingService } from './embeddingService';
 import { VectorVersioningService } from './vectorVersioningService';
 
 export interface DocumentMetadata {

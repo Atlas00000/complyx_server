@@ -1,4 +1,4 @@
-import { prisma } from '../../../utils/db';
+import { prisma as _prisma } from '../../../utils/db';
 import type { Message } from '../interfaces/AIProvider';
 
 export interface ConversationMemory {
@@ -62,20 +62,19 @@ export class ConversationMemoryService {
    * Save conversation messages to memory
    */
   async saveConversation(
-    sessionId: string,
-    userId: string,
+    _sessionId: string,
+    _userId: string,
     messages: Message[],
     config?: Partial<MemoryConfig>
   ): Promise<void> {
     const finalConfig = { ...this.defaultConfig, ...config };
 
     // Limit messages if needed
-    const limitedMessages = this.limitMessages(messages, finalConfig.maxMessages);
+    this.limitMessages(messages, finalConfig.maxMessages);
 
     // Create summary if enabled and messages exceed threshold
-    let contextSummary = '';
     if (finalConfig.enableSummarization && messages.length > finalConfig.maxContextLength) {
-      contextSummary = await this.summarizeContext(messages.slice(0, -finalConfig.maxContextLength));
+      await this.summarizeContext(messages.slice(0, -finalConfig.maxContextLength));
     }
 
     // Store in database (using a simple JSON storage approach)
@@ -93,10 +92,9 @@ export class ConversationMemoryService {
    * Retrieve conversation memory for a session
    */
   async getConversationMemory(
-    sessionId: string,
-    config?: Partial<MemoryConfig>
+    _sessionId: string,
+    _config?: Partial<MemoryConfig>
   ): Promise<Message[]> {
-    const finalConfig = { ...this.defaultConfig, ...config };
 
     try {
       // Retrieve from database
@@ -149,7 +147,7 @@ export class ConversationMemoryService {
   /**
    * Clear conversation memory for a session
    */
-  async clearMemory(sessionId: string): Promise<void> {
+  async clearMemory(_sessionId: string): Promise<void> {
     try {
       // Clear from database
       // TODO: Implement database deletion for conversation history
@@ -327,7 +325,7 @@ export class ConversationMemoryService {
   /**
    * Extract date from first message (placeholder)
    */
-  private extractFirstMessageDate(messages: Message[]): Date {
+  private extractFirstMessageDate(_messages: Message[]): Date {
     return new Date();
   }
 
@@ -428,9 +426,9 @@ export class ConversationMemoryService {
     const messages = await this.getConversationMemory(sessionId);
     
     if (messages.length > keepRecent) {
-      const systemMessages = messages.filter(msg => msg.role === 'system');
+      messages.filter(msg => msg.role === 'system');
       const conversationMessages = messages.filter(msg => msg.role !== 'system');
-      const recentMessages = conversationMessages.slice(-keepRecent);
+      conversationMessages.slice(-keepRecent);
       
       // Save cleaned up messages
       // TODO: Implement proper cleanup and save

@@ -1,5 +1,5 @@
 import { RAGService } from '../../services/knowledge/ragService';
-import { KnowledgeIngestionService, DocumentMetadata } from '../../services/knowledge/knowledgeIngestionService';
+import { KnowledgeIngestionService, DocumentMetadata as _DocumentMetadata } from '../../services/knowledge/knowledgeIngestionService';
 import { TestHelpers, TestResult } from '../testHelpers';
 
 /**

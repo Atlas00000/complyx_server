@@ -41,7 +41,8 @@ export interface FacetedSearchResult {
  */
 export class FacetedSearchService {
   private semanticSearchService: SemanticSearchService;
-  private vectorDatabase: VectorDatabase;
+  // @ts-expect-error - Reserved for future faceted search operations
+  private _vectorDatabase: VectorDatabase;
 
   constructor(
     semanticSearchService?: SemanticSearchService,
@@ -57,9 +58,9 @@ export class FacetedSearchService {
 
     if (!vectorDatabase) {
       const { VectorDatabaseFactory } = require('./vectorDatabase');
-      this.vectorDatabase = VectorDatabaseFactory.create();
+      this._vectorDatabase = VectorDatabaseFactory.create();
     } else {
-      this.vectorDatabase = vectorDatabase;
+      this._vectorDatabase = vectorDatabase;
     }
   }
 
@@ -73,7 +74,17 @@ export class FacetedSearchService {
       searchQuery.topK || 50, // Get more results for faceting
       undefined, // Use default weights
       undefined, // Use default weights
-      searchQuery.filters
+      searchQuery.filters ? {
+        documentId: Array.isArray(searchQuery.filters.documentId) 
+          ? searchQuery.filters.documentId[0] 
+          : searchQuery.filters.documentId,
+        section: Array.isArray(searchQuery.filters.section)
+          ? searchQuery.filters.section[0]
+          : searchQuery.filters.section,
+        source: Array.isArray(searchQuery.filters.source)
+          ? searchQuery.filters.source[0]
+          : searchQuery.filters.source,
+      } : undefined
     );
 
     // Step 2: Extract facets from search results

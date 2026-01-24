@@ -277,9 +277,9 @@ Continuing with the {{assessmentPhase}} assessment...
   private renderConditionals(template: string, context: TemplateContext): string {
     const conditionalRegex = /\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
     
-    return template.replace(conditionalRegex, (match, variable, content) => {
+    return template.replace(conditionalRegex, (_match, variable, content) => {
       const value = context[variable];
-      if (value && value !== '' && value !== 0 && value !== false) {
+      if (value && value !== '' && value !== 0 && value !== true) {
         return content;
       }
       return '';
@@ -292,7 +292,7 @@ Continuing with the {{assessmentPhase}} assessment...
   private replaceVariables(template: string, context: TemplateContext): string {
     const variableRegex = /\{\{(\w+)\}\}/g;
     
-    return template.replace(variableRegex, (match, variable) => {
+    return template.replace(variableRegex, (_match, variable) => {
       const value = context[variable];
       
       if (value === undefined || value === null) {

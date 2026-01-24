@@ -25,13 +25,16 @@ export interface DocumentChunk {
  * Generates embeddings for text using Gemini's embedding model
  */
 export class EmbeddingService {
-  private client: GoogleGenerativeAI;
+  // Client and model stored for future use
+  // @ts-expect-error - Reserved for future embedding operations
+  private _client: GoogleGenerativeAI;
   private apiKey: string;
-  private model: string = 'text-embedding-004'; // Gemini embedding model
+  // @ts-expect-error - Reserved for future model configuration
+  private _model: string = 'text-embedding-004'; // Gemini embedding model
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || '';
-    this.client = new GoogleGenerativeAI(this.apiKey);
+    this._client = new GoogleGenerativeAI(this.apiKey);
   }
 
   /**

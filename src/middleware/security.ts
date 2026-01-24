@@ -141,7 +141,7 @@ export const validationRules = {
 /**
  * Sanitization Middleware
  */
-export const sanitizeInput = (req: Request, res: Response, next: NextFunction): void => {
+export const sanitizeInput = (req: Request, _res: Response, next: NextFunction): void => {
   // Recursively sanitize request body
   const sanitize = (obj: any): any => {
     if (typeof obj === 'string') {
@@ -180,7 +180,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
 /**
  * XSS Protection Middleware
  */
-export const xssProtection = (req: Request, res: Response, next: NextFunction): void => {
+export const xssProtection = (req: Request, _res: Response, next: NextFunction): void => {
   // Additional XSS protection beyond Helmet
   // This is a basic implementation - Helmet handles most of it
   
@@ -223,9 +223,9 @@ export const corsConfig = {
  */
 export const securityErrorHandler = (
   err: Error,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   // Don't leak error details in production
   const isDevelopment = process.env.NODE_ENV === 'development';

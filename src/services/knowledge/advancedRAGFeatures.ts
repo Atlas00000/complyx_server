@@ -66,7 +66,7 @@ export class AdvancedRAGFeatures {
       );
 
       // Build cross-references
-      const crossReferences: CrossReference[] = relatedDocuments.map((result, index) => {
+      const crossReferences: CrossReference[] = relatedDocuments.map((result) => {
         // Determine reference type based on metadata or content analysis
         let referenceType: CrossReference['referenceType'] = 'related';
         
@@ -118,16 +118,16 @@ export class AdvancedRAGFeatures {
     const now = new Date();
     const query = queryDate || now;
 
-    for (const doc of documents) {
+    for (const _doc of documents) {
       // Extract date from metadata (if available)
       // For now, use document metadata or default to recent
       let documentDate: Date | undefined;
       
       // Try to extract from metadata (would need to be stored during ingestion)
       // For now, assume documents are current if no date available
-      documentDate = undefined;
+      // documentDate remains undefined for now
 
-      const isCurrent = !documentDate || (now.getTime() - documentDate.getTime()) < (365 * 24 * 60 * 60 * 1000); // Within 1 year
+      const isCurrent = !documentDate || (documentDate ? (now.getTime() - documentDate.getTime()) < (365 * 24 * 60 * 60 * 1000) : true); // Within 1 year
       
       // Determine if document is relevant to query date
       let isRelevant = true;

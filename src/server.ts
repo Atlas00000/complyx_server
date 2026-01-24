@@ -14,19 +14,24 @@ import {
   securityErrorHandler,
   corsConfig,
 } from './middleware/security';
+import { requestLogger } from './middleware/requestLogger';
+import { logger } from './utils/logger';
 
 // Load .env file - dotenv will look for .env in current working directory and parent directories
 dotenv.config();
 
 // Verify GEMINI_API_KEY is loaded (for debugging)
 if (!process.env.GEMINI_API_KEY) {
-  console.warn('⚠️  WARNING: GEMINI_API_KEY is not set in environment variables');
+  logger.warn('GEMINI_API_KEY is not set in environment variables');
 } else {
-  console.log(`✅ GEMINI_API_KEY loaded (length: ${process.env.GEMINI_API_KEY.length})`);
+  logger.info('GEMINI_API_KEY loaded', { length: process.env.GEMINI_API_KEY.length });
 }
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
+
+// Request logging (apply first to capture all requests)
+app.use(requestLogger);
 
 // Security middleware (apply early)
 app.use(securityHeaders);
@@ -67,9 +72,9 @@ setupRoutes(app);
   try {
     const { rbacService } = await import('./services/auth/rbacService');
     await rbacService.initializeDefaultRolesAndPermissions();
-    console.log('✅ Default roles and permissions initialized');
+    logger.info('Default roles and permissions initialized');
   } catch (error) {
-    console.error('⚠️  Failed to initialize roles and permissions:', error);
+    logger.error('Failed to initialize roles and permissions', error as Error);
   }
 })();
 
@@ -83,6 +88,10 @@ app.use((_req: Request, res: Response) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔒 Security middleware enabled`);
+  logger.info('Server started', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    logLevel: process.env.LOG_LEVEL || 'info',
+  });
+  logger.info('Security middleware enabled');
 });

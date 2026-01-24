@@ -176,7 +176,7 @@ async function ingestURL(
       tags: config.tags || [],
       priority: config.priority || detectPriority(config.url),
       scope: config.scope || detectScope(config.url),
-      publishDate: urlResult.metadata?.publishDate || new Date(),
+      publishDate: urlResult.metadata?.publishedDate ? new Date(urlResult.metadata.publishedDate) : new Date(),
       trustedSource: true,
     };
     

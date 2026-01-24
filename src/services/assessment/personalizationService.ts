@@ -316,7 +316,7 @@ export class PersonalizationService {
   /**
    * Apply geographic filtering
    */
-  private applyGeographicFilter(questions: QuestionNode[], geography: string): QuestionNode[] {
+  private applyGeographicFilter(questions: QuestionNode[], _geography: string): QuestionNode[] {
     // Geographic filtering: Some questions may be jurisdiction-specific
     // For now, include all questions (could be enhanced with jurisdiction-specific logic)
     return questions;
@@ -510,7 +510,7 @@ export class PersonalizationService {
   /**
    * Enhance question for enterprise
    */
-  private enhanceQuestionForEnterprise(question: QuestionNode, profile?: PersonalizationProfile): QuestionNode {
+  private enhanceQuestionForEnterprise(question: QuestionNode, _profile?: PersonalizationProfile): QuestionNode {
     // Could add enterprise-specific considerations
     // For now, return as-is
     return question;
@@ -551,7 +551,7 @@ export class PersonalizationService {
   customizeByGeography(
     questions: QuestionNode[],
     geography: string,
-    profile?: PersonalizationProfile
+    _profile?: PersonalizationProfile
   ): QuestionNode[] {
     // Identify jurisdiction-specific requirements
     const jurisdictionConfig = this.getJurisdictionConfig(geography);

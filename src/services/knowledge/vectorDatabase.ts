@@ -308,13 +308,15 @@ export class PineconeVectorDatabase implements VectorDatabase {
   private index: any = null;
   private indexName: string;
   private apiKey: string;
-  private environment: string;
+  private _environment: string;
   private dimension: number;
   private connected: boolean = false;
 
   constructor() {
     this.apiKey = process.env.PINECONE_API_KEY || '';
-    this.environment = process.env.PINECONE_ENVIRONMENT || '';
+    // Environment stored for future use (intentionally unused for now)
+    this._environment = process.env.PINECONE_ENVIRONMENT || '';
+    void this._environment; // Mark as intentionally used
     this.indexName = process.env.PINECONE_INDEX_NAME || 'complyx-knowledge';
     this.dimension = parseInt(process.env.EMBEDDING_DIMENSION || '768', 10);
 

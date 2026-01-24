@@ -19,7 +19,7 @@ export class SessionService {
    * Save or update assessment session
    */
   async saveSession(data: SaveSessionData): Promise<void> {
-    const { assessmentId, userId, answers, progress, status, ifrsStandard, phase } = data;
+    const { assessmentId, userId, answers, progress, status, ifrsStandard: _ifrsStandard, phase: _phase } = data;
 
     // Ensure user exists (create if not)
     let user = await prisma.user.findUnique({ where: { email: userId } });

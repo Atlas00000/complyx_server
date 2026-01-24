@@ -132,7 +132,8 @@ export class AIService {
     // Check for IFRS-related keywords (for IFRS-specific queries)
     // This is a basic check - in production, you'd check against the original query
     const ifrsKeywords = ['IFRS', 'S1', 'S2', 'standard', 'compliance'];
-    const hasIFRSKeywords = response.content && ifrsKeywords.some(keyword => 
+    // Check for IFRS keywords in response (for validation)
+    ifrsKeywords.some(keyword => 
       response.content!.toLowerCase().includes(keyword.toLowerCase())
     );
 

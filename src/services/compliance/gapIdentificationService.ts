@@ -1,4 +1,4 @@
-import { ComplianceMatrixService, ComplianceMatrix, RequirementStatus } from './complianceMatrixService';
+import { ComplianceMatrixService, ComplianceMatrix as _ComplianceMatrix, RequirementStatus } from './complianceMatrixService';
 
 export interface ComplianceGap {
   requirementId: string;
@@ -145,14 +145,14 @@ export class GapIdentificationService {
    * Identify missing answers for a requirement
    */
   private identifyMissingAnswers(
-    requirement: RequirementStatus,
+    _requirement: RequirementStatus,
     answers: Array<{ questionId: string; value: string }>,
-    ifrsStandard: 'S1' | 'S2'
+    _ifrsStandard: 'S1' | 'S2'
   ): string[] {
     // This is a simplified implementation
     // In a full implementation, we would query the database for questions
     // associated with this requirement and check which ones are missing answers
-    const answeredQuestionIds = new Set(answers.map(a => a.questionId));
+    new Set(answers.map(a => a.questionId));
     
     // For now, return empty array - this would be enhanced to query actual questions
     // TODO: Query database for requirement questions and identify missing ones
@@ -203,7 +203,7 @@ export class GapIdentificationService {
   /**
    * Generate priority actions based on identified gaps
    */
-  private generatePriorityActions(gaps: ComplianceGap[], ifrsStandard: 'S1' | 'S2'): string[] {
+  private generatePriorityActions(gaps: ComplianceGap[], _ifrsStandard: 'S1' | 'S2'): string[] {
     const actions: string[] = [];
 
     const criticalGaps = gaps.filter(g => g.severity === 'critical');

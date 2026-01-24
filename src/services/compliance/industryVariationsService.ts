@@ -1,4 +1,4 @@
-import { prisma } from '../../utils/db';
+import { prisma as _prisma } from '../../utils/db';
 
 export type IndustryType = 
   | 'financial_services'
@@ -235,7 +235,7 @@ export class IndustryVariationsService {
    * Detect industry based on question answers (simplified heuristic)
    * In a full implementation, this would use more sophisticated logic
    */
-  async detectIndustry(answers: Array<{ questionId: string; value: string }>): Promise<IndustryType> {
+  async detectIndustry(_answers: Array<{ questionId: string; value: string }>): Promise<IndustryType> {
     // This is a simplified implementation
     // In production, this would analyze answers to key industry-identifying questions
     
@@ -253,7 +253,8 @@ export class IndustryVariationsService {
     category: string;
     requirement: string | null;
   }>> {
-    const context = this.getIndustryContext(industry);
+    // Context retrieved for future use
+    this.getIndustryContext(industry);
     
     // In a full implementation, this would query the database for industry-specific questions
     // For now, return empty array
@@ -264,7 +265,7 @@ export class IndustryVariationsService {
   /**
    * Get industry-specific recommendations
    */
-  getIndustryRecommendations(industry: IndustryType, gapAnalysis: any): string[] {
+  getIndustryRecommendations(industry: IndustryType, _gapAnalysis: any): string[] {
     const context = this.getIndustryContext(industry);
     const recommendations: string[] = [];
 
@@ -295,7 +296,7 @@ export class IndustryVariationsService {
    */
   async prioritizeQuestionsByIndustry(
     questionIds: string[],
-    industry: IndustryType
+    _industry: IndustryType
   ): Promise<string[]> {
     // In a full implementation, this would prioritize industry-relevant questions
     // For now, return questions in original order

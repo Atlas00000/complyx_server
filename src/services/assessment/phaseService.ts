@@ -209,7 +209,7 @@ export class PhaseService {
    */
   getQuestionsForMode(
     mode: AssessmentMode,
-    ifrsStandard: 'S1' | 'S2' | 'both'
+    _ifrsStandard: 'S1' | 'S2' | 'both'
   ): {
     categories: string[];
     priority: 'high' | 'medium' | 'low';
@@ -250,7 +250,7 @@ export class PhaseService {
     const percentage = Math.min(100, Math.round((questionsAnswered / totalQuestions) * 100));
 
     // Estimate time remaining
-    const elapsedMinutes = (Date.now() - context.startedAt.getTime()) / (1000 * 60);
+    (Date.now() - context.startedAt.getTime()) / (1000 * 60);
     const avgTimePerQuestion = config.estimatedDuration / totalQuestions;
     const estimatedTimeRemaining = Math.max(0, (totalQuestions - questionsAnswered) * avgTimePerQuestion);
 
@@ -343,8 +343,8 @@ export class PhaseService {
    * Validate mode selection
    */
   validateModeSelection(
-    mode: AssessmentMode,
-    ifrsStandard: 'S1' | 'S2' | 'both'
+    _mode: AssessmentMode,
+    _ifrsStandard: 'S1' | 'S2' | 'both'
   ): {
     valid: boolean;
     error?: string;
@@ -362,7 +362,7 @@ export class PhaseService {
   getModeSummary(context: AssessmentContext): {
     mode: AssessmentMode;
     config: AssessmentModeConfig;
-    progress: ReturnType<typeof this.calculateProgress>;
+    progress: ReturnType<PhaseService['calculateProgress']>;
     phase: PhaseConfig;
     nextPhase?: PhaseConfig;
   } {

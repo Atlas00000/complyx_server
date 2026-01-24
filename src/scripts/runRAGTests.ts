@@ -1,4 +1,4 @@
-import { TestHelpers, TestSuite, TestResult } from './testHelpers';
+import { TestHelpers, TestSuite, TestResult as _TestResult } from './testHelpers';
 import { RAGTests } from './tests/ragTests';
 
 /**

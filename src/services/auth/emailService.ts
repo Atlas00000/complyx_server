@@ -70,7 +70,7 @@ export class EmailService {
   /**
    * Send email verification email
    */
-  async sendVerificationEmail(userId: string, email: string, token: string): Promise<void> {
+  async sendVerificationEmail(_userId: string, email: string, token: string): Promise<void> {
     const verificationUrl = `${this.baseUrl}/auth/verify-email?token=${token}`;
 
     const html = `
@@ -115,7 +115,7 @@ export class EmailService {
   /**
    * Send password reset email
    */
-  async sendPasswordResetEmail(userId: string, email: string, token: string): Promise<void> {
+  async sendPasswordResetEmail(_userId: string, email: string, token: string): Promise<void> {
     const resetUrl = `${this.baseUrl}/auth/reset-password?token=${token}`;
 
     const html = `

@@ -1,5 +1,5 @@
 import { InMemoryVectorDatabase } from '../services/knowledge/vectorDatabase';
-import { VectorDatabase, VectorEmbedding } from '../services/knowledge/vectorDatabase';
+import { VectorDatabase, VectorEmbedding as _VectorEmbedding } from '../services/knowledge/vectorDatabase';
 import dotenv from 'dotenv';
 
 // Load environment variables

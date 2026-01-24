@@ -44,10 +44,10 @@ export class UploadMiddleware {
    */
   private createStorage() {
     return multer.diskStorage({
-      destination: (req, file, cb) => {
+      destination: (_req, _file, cb) => {
         cb(null, this.uploadDir);
       },
-      filename: (req, file, cb) => {
+      filename: (_req, file, cb) => {
         // Generate unique filename
         const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
         const ext = path.extname(file.originalname);
@@ -61,7 +61,7 @@ export class UploadMiddleware {
    * File filter function
    */
   private fileFilter() {
-    return (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    return (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
       // Check MIME type
       if (this.allowedMimeTypes.length > 0 && !this.allowedMimeTypes.includes(file.mimetype)) {
         return cb(new Error(`File type not allowed: ${file.mimetype}. Allowed types: ${this.allowedMimeTypes.join(', ')}`));

@@ -126,7 +126,7 @@ export class IntentRecognitionService {
   /**
    * Detect question intent
    */
-  private detectQuestionIntent(message: string, conversationHistory: Message[]): Intent | null {
+  private detectQuestionIntent(message: string, _conversationHistory: Message[]): Intent | null {
     // Check for question markers
     const questionMarkers = ['?', 'what', 'how', 'why', 'when', 'where', 'who', 'which', 'can', 'could', 'should', 'would', 'is', 'are', 'does', 'do'];
     const hasQuestionMarker = questionMarkers.some(marker => message.includes(marker));

@@ -1,4 +1,4 @@
-import { TestHelpers, TestResult, TestSuite } from './testHelpers';
+import { TestHelpers, TestResult as _TestResult, TestSuite } from './testHelpers';
 import { VectorDatabaseTests } from './tests/vectorDatabaseTests';
 import { IngestionTests } from './tests/ingestionTests';
 import { RAGTests } from './tests/ragTests';

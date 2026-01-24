@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { authService } from '../auth/authService';
-import { emailService } from '../auth/emailService';
 
 const prisma = new PrismaClient();
 
@@ -74,7 +73,7 @@ export class InvitationService {
   /**
    * Accept invitation
    */
-  async acceptInvitation(token: string, userData: {
+  async acceptInvitation(_token: string, _userData: {
     name?: string;
     password: string;
   }): Promise<{ userId: string; organizationId: string }> {
@@ -88,7 +87,7 @@ export class InvitationService {
   /**
    * Get invitation by token
    */
-  async getInvitationByToken(token: string): Promise<Invitation | null> {
+  async getInvitationByToken(_token: string): Promise<Invitation | null> {
     // TODO: Implement when Invitation model is added
     return null;
   }
@@ -96,7 +95,7 @@ export class InvitationService {
   /**
    * Get all invitations for an organization
    */
-  async getInvitationsByOrganization(organizationId: string): Promise<Invitation[]> {
+  async getInvitationsByOrganization(_organizationId: string): Promise<Invitation[]> {
     // TODO: Implement when Invitation model is added
     return [];
   }
@@ -104,7 +103,7 @@ export class InvitationService {
   /**
    * Cancel/delete invitation
    */
-  async cancelInvitation(invitationId: string): Promise<void> {
+  async cancelInvitation(_invitationId: string): Promise<void> {
     // TODO: Implement when Invitation model is added
   }
 
@@ -122,7 +121,10 @@ export class InvitationService {
 
     const invitationUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${token}`;
 
-    const html = `
+    // Email templates are prepared for future use when email service is integrated
+    // HTML email template (for future use - currently unused)
+    // @ts-expect-error - Template prepared for future email service integration
+    const _html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -142,7 +144,9 @@ export class InvitationService {
       </html>
     `;
 
-    const text = `
+    // Plain text email template (for future use - currently unused)
+    // @ts-expect-error - Template prepared for future email service integration
+    const _text = `
       You've been invited to join ${organization?.name || 'Complyx'}!
       
       You've been invited to join the team on Complyx. Click this link to accept the invitation and create your account:

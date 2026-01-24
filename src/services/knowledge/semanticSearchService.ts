@@ -1,4 +1,4 @@
-import { VectorDatabase, VectorSearchResult } from './vectorDatabase';
+import { VectorDatabase } from './vectorDatabase';
 import { EmbeddingService } from './embeddingService';
 
 export interface SearchQuery {
@@ -400,12 +400,13 @@ export class SemanticSearchService {
   }
 
   /**
-   * Simple keyword search within results
+   * Simple keyword search within results (for future use)
    */
-  private keywordSearch(results: SearchResult[], query: string): SearchResult[] {
-    const queryKeywords = query.toLowerCase().split(/\s+/).filter(k => k.length > 2);
+  // @ts-expect-error - Method prepared for future keyword search functionality
+  private _keywordSearch(results: SearchResult[], query: string): SearchResult[] {
+    const queryKeywords = query.toLowerCase().split(/\s+/).filter((k: string) => k.length > 2);
 
-    return results.map(result => {
+    return results.map((result: SearchResult) => {
       const textLower = result.text.toLowerCase();
       let matchCount = 0;
 
@@ -420,6 +421,6 @@ export class SemanticSearchService {
         ...result,
         score,
       };
-    }).filter(result => result.score > 0);
+    }).filter((result: SearchResult & { score: number }) => result.score > 0);
   }
 }

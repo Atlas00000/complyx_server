@@ -18,7 +18,7 @@ export interface PromptTemplate {
 }
 
 export interface TemplateContext {
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: string | number | boolean | string[] | undefined;
   conversationHistory?: string;
   userQuery?: string;
   contextDocuments?: string;
@@ -199,9 +199,9 @@ Provide practical, actionable guidance that:
   private renderConditionals(template: string, context: TemplateContext): string {
     const conditionalRegex = /\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
     
-    return template.replace(conditionalRegex, (match, variable, content) => {
+    return template.replace(conditionalRegex, (_match, variable, content) => {
       const value = context[variable];
-      if (value && value !== '' && value !== 0 && value !== false) {
+      if (value && value !== '' && value !== 0 && value !== true) {
         return content;
       }
       return '';
@@ -214,7 +214,7 @@ Provide practical, actionable guidance that:
   private replaceVariables(template: string, context: TemplateContext): string {
     const variableRegex = /\{\{(\w+)\}\}/g;
     
-    return template.replace(variableRegex, (match, variable) => {
+    return template.replace(variableRegex, (_match, variable) => {
       const value = context[variable];
       
       // Handle array values (e.g., keyTopics)

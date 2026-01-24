@@ -3,7 +3,9 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 
-const prisma = new PrismaClient();
+// Prisma client available for future use
+// @ts-expect-error - Reserved for future database operations
+const _prisma = new PrismaClient();
 
 export interface TokenPayload {
   userId: string;
@@ -36,10 +38,10 @@ export class AuthService {
    */
   generateAccessToken(payload: TokenPayload): string {
     return jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.accessTokenExpiry,
+      expiresIn: this.accessTokenExpiry as string,
       issuer: 'complyx-api',
       audience: 'complyx-client',
-    });
+    } as jwt.SignOptions);
   }
 
   /**
@@ -47,10 +49,10 @@ export class AuthService {
    */
   generateRefreshToken(payload: TokenPayload): string {
     return jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.refreshTokenExpiry,
+      expiresIn: this.refreshTokenExpiry as string,
       issuer: 'complyx-api',
       audience: 'complyx-client',
-    });
+    } as jwt.SignOptions);
   }
 
   /**

@@ -705,7 +705,7 @@ export class AssessmentFlowEngine {
   /**
    * Get questions for progressive disclosure (broad to specific)
    */
-  getProgressiveQuestions(context: AssessmentContext, level: 'broad' | 'medium' | 'specific'): QuestionNode[] {
+  getProgressiveQuestions(_context: AssessmentContext, level: 'broad' | 'medium' | 'specific'): QuestionNode[] {
     const candidates = this.getCandidateQuestions();
     
     return candidates.filter(q => {

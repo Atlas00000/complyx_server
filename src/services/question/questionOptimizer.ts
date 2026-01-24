@@ -298,7 +298,7 @@ export class QuestionOptimizer {
   /**
    * Generate options for multiple choice questions
    */
-  generateOptions(question: QuestionNode, context?: any): string[] {
+  generateOptions(question: QuestionNode, _context?: any): string[] {
     if (question.options && question.options.length > 0) {
       return question.options;
     }

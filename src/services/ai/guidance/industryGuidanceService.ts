@@ -234,7 +234,7 @@ export class IndustryGuidanceService {
   /**
    * Generate resources for an industry
    */
-  private generateResources(industry: IndustryType): string[] {
+  private generateResources(_industry: IndustryType): string[] {
     return [
       'IFRS S1 and S2 official standards',
       'Industry-specific guidance documents',
@@ -249,7 +249,7 @@ export class IndustryGuidanceService {
   private generateContextualGuidance(
     industry: IndustryType,
     gapAnalysis: any,
-    scores: any,
+    _scores: any,
     progress: number
   ): string {
     const context = this.industryVariationsService.getIndustryContext(industry);
@@ -317,7 +317,7 @@ export class IndustryGuidanceService {
   /**
    * Generate examples for guidance
    */
-  private generateExamples(industry: IndustryType, gapAnalysis: any): string[] {
+  private generateExamples(_industry: IndustryType, gapAnalysis: any): string[] {
     const examples: string[] = [];
 
     if (gapAnalysis.byCategory.governance.length > 0) {

@@ -335,7 +335,7 @@ export class RAGService {
   private buildRAGPrompt(
     query: string,
     contextText: string,
-    conversationHistory?: Message[]
+    _conversationHistory?: Message[]
   ): string {
     let prompt = `You are Complyx, an AI assistant specialized in IFRS standards and general accounting knowledge, with particular expertise in IFRS S1 (Sustainability-related Financial Information Disclosures) and IFRS S2 (Climate-related Disclosures).
 
@@ -363,7 +363,6 @@ Answer:`;
    * Extract enhanced citations with page/section references
    */
   private extractEnhancedCitations(documents: RAGContext['relevantDocuments']): Citation[] {
-    const citations: Citation[] = [];
     const citationMap = new Map<string, Citation>();
 
     for (const doc of documents) {

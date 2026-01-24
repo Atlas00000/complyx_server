@@ -1,4 +1,4 @@
-import { VectorDatabase, VectorEmbedding, MetadataFilter } from './vectorDatabase';
+import { VectorDatabase, VectorEmbedding, MetadataFilter as _MetadataFilter } from './vectorDatabase';
 
 export interface VersionInfo {
   version: string;
@@ -103,14 +103,9 @@ export class VectorVersioningService {
     version: string,
     topK: number = 10
   ): Promise<any[]> {
-    const filter: MetadataFilter = {
-      version: { $eq: version } as any, // Type assertion for version filter
-    };
-
     // Note: This requires the vector database to support version filtering
     // The filter might need adjustment based on the actual DB implementation
     return this.vectorDatabase.search(queryVector, topK, {
-      ...filter,
       version: version, // Simple string match for now
     } as any);
   }
@@ -118,7 +113,7 @@ export class VectorVersioningService {
   /**
    * Get vector count for a specific version
    */
-  async getVectorCountForVersion(version: string): Promise<number> {
+  async getVectorCountForVersion(_version: string): Promise<number> {
     // Placeholder - would need to query and count vectors with this version
     // This would depend on the vector database's aggregation capabilities
     return 0;
@@ -155,7 +150,7 @@ export class VectorVersioningService {
   /**
    * Compare versions (get differences)
    */
-  async compareVersions(version1: string, version2: string): Promise<{
+  async compareVersions(_version1: string, _version2: string): Promise<{
     added: number;
     removed: number;
     modified: number;

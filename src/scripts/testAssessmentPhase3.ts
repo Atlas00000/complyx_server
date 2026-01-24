@@ -550,7 +550,6 @@ async function testIntegration() {
     );
 
     // Process assessment flow
-    let currentState = state;
     
     // Get first question
     const question1 = await conversationalService.processMessage('integration-test', 'Ready');

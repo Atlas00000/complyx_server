@@ -107,11 +107,8 @@ export class RBACService {
    * Create default roles
    */
   private async createDefaultRoles(permissions: Permission[]): Promise<void> {
-    // Helper function to find permission by name
-    const findPerm = (name: string) => permissions.find((p) => p.name === name);
-
     // Admin role - all permissions
-    const adminRole = await prisma.role.create({
+    await prisma.role.create({
       data: {
         name: 'Admin',
         description: 'Full system access',

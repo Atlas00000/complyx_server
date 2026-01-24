@@ -49,7 +49,7 @@ export class OAuthService {
             clientSecret: this.googleClientSecret,
             callbackURL: `${this.callbackBaseUrl}/api/auth/google/callback`,
           },
-          async (accessToken, refreshToken, profile, done) => {
+          async (_accessToken, _refreshToken, profile, done) => {
             try {
               const oauthProfile: OAuthProfile = {
                 id: profile.id,
@@ -60,9 +60,9 @@ export class OAuthService {
               };
 
               const user = await this.findOrCreateUser(oauthProfile);
-              return done(null, user);
+              return done(null, user || undefined);
             } catch (error) {
-              return done(error as Error, null);
+              return done(error as Error, undefined);
             }
           }
         )
@@ -79,7 +79,7 @@ export class OAuthService {
             callbackURL: `${this.callbackBaseUrl}/api/auth/microsoft/callback`,
             tenant: 'common', // 'common' allows both personal and work/school accounts
           },
-          async (accessToken, refreshToken, profile, done) => {
+          async (_accessToken, _refreshToken, profile, done) => {
             try {
               const oauthProfile: OAuthProfile = {
                 id: profile.id,
@@ -90,9 +90,9 @@ export class OAuthService {
               };
 
               const user = await this.findOrCreateUser(oauthProfile);
-              return done(null, user);
+              return done(null, user || undefined);
             } catch (error) {
-              return done(error as Error, null);
+              return done(error as Error, undefined);
             }
           }
         )

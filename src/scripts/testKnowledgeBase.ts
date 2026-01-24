@@ -1,4 +1,4 @@
-import { VectorDatabaseFactory, InMemoryVectorDatabase } from '../services/knowledge/vectorDatabase';
+import { VectorDatabaseFactory, InMemoryVectorDatabase as _InMemoryVectorDatabase } from '../services/knowledge/vectorDatabase';
 import { EmbeddingService } from '../services/knowledge/embeddingService';
 import { SemanticSearchService } from '../services/knowledge/semanticSearchService';
 import { RAGService } from '../services/knowledge/ragService';

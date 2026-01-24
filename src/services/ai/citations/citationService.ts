@@ -19,7 +19,7 @@ export interface AIResponseWithCitations {
   content: string;
   citations: Citation[];
   references: CitationReference[];
-  confidence: number; // 0-100 confidence score
+  confidence: ConfidenceScore; // Confidence score with factors
   sources: string[];
 }
 
@@ -189,8 +189,7 @@ export class CitationService {
     let annotatedText = responseText;
 
     // Add citation markers in text
-    citations.forEach((citation, index) => {
-      const marker = `[${index + 1}]`;
+    citations.forEach((citation, _index) => {
       // Simple approach: add citation marker at end of sentences mentioning the requirement
       if (citation.section && responseText.includes(citation.section)) {
         references.push({

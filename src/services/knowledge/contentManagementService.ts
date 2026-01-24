@@ -1,6 +1,6 @@
 import { KnowledgeIngestionService, DocumentMetadata, IngestionResult } from './knowledgeIngestionService';
 import { VectorVersioningService } from './vectorVersioningService';
-import { VectorDatabase, MetadataFilter } from './vectorDatabase';
+import { VectorDatabase } from './vectorDatabase';
 
 export interface ContentVersion {
   version: string;
@@ -67,22 +67,24 @@ export class ContentManagementService {
       this.ingestionService = ingestionService;
     }
 
+    // Initialize vectorDatabase first
+    if (!vectorDatabase) {
+      const { VectorDatabaseFactory } = require('./vectorDatabase');
+      this.vectorDatabase = VectorDatabaseFactory.create();
+    } else {
+      this.vectorDatabase = vectorDatabase;
+    }
+    
+    // Ensure vectorDatabase is initialized
+    if (!this.vectorDatabase) {
+      throw new Error('VectorDatabase must be initialized');
+    }
+
     if (!versioningService) {
       const { VectorVersioningService } = require('./vectorVersioningService');
-      if (!vectorDatabase) {
-        const { VectorDatabaseFactory } = require('./vectorDatabase');
-        this.vectorDatabase = VectorDatabaseFactory.create();
-      } else {
-        this.vectorDatabase = vectorDatabase;
-      }
       this.versioningService = new VectorVersioningService(this.vectorDatabase);
     } else {
       this.versioningService = versioningService;
-    }
-
-    if (!this.vectorDatabase) {
-      const { VectorDatabaseFactory } = require('./vectorDatabase');
-      this.vectorDatabase = VectorDatabaseFactory.create();
     }
   }
 
@@ -228,7 +230,7 @@ export class ContentManagementService {
   async deprecateDocument(
     documentId: string,
     reason?: string,
-    deprecatedBy?: string
+    _deprecatedBy?: string
   ): Promise<boolean> {
     // Similar to archive but marks as deprecated
     console.log(`Document ${documentId} deprecated: ${reason || 'No reason provided'}`);
@@ -291,7 +293,7 @@ export class ContentManagementService {
   /**
    * Get content quality score
    */
-  async getContentQualityScore(documentId: string): Promise<number> {
+  async getContentQualityScore(_documentId: string): Promise<number> {
     // Placeholder - would calculate based on:
     // - Completeness (all sections present)
     // - Chunk quality (appropriate chunk sizes)
@@ -312,7 +314,7 @@ export class ContentManagementService {
   /**
    * Search documents by metadata
    */
-  async searchDocuments(filter: {
+  async searchDocuments(_filter: {
     documentType?: DocumentMetadata['documentType'];
     source?: string;
     status?: ContentStatus['status'];

@@ -3,7 +3,7 @@ import { promptTemplateSystem } from '../services/ai/utils/promptTemplates';
 import { 
   buildAssessmentConversation, 
   buildQAConversation, 
-  buildGuidanceConversation,
+  buildGuidanceConversation as _buildGuidanceConversation,
   buildContextualConversation,
 } from '../services/ai/utils/prompts';
 import { ConversationMemoryService } from '../services/ai/memory/conversationMemoryService';

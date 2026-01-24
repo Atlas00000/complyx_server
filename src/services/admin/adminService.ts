@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { userService } from '../user/userService';
-import { rbacService } from '../auth/rbacService';
+import { userService as _userService } from '../user/userService';
+import { rbacService as _rbacService } from '../auth/rbacService';
 import { auditService } from '../auth/auditService';
 
 const prisma = new PrismaClient();
@@ -418,12 +418,12 @@ export class AdminService {
 
     return {
       userActivity: {
-        registrations: groupByDate(registrations, 'createdAt'),
-        logins: groupByDate(logins, 'lastLoginAt'),
+        registrations: groupByDate(registrations.map(r => ({ createdAt: r.createdAt })), 'createdAt'),
+        logins: groupByDate(logins.map(l => ({ lastLoginAt: l.lastLoginAt || undefined })), 'lastLoginAt'),
       },
       assessmentActivity: {
-        created: groupByDate(assessmentsCreated, 'createdAt'),
-        completed: groupByDate(assessmentsCompleted, 'completedAt'),
+        created: groupByDate(assessmentsCreated.map(a => ({ createdAt: a.createdAt })), 'createdAt'),
+        completed: groupByDate(assessmentsCompleted.map(a => ({ completedAt: a.completedAt || undefined })), 'completedAt'),
       },
       topUsers: topUsers.map((user) => ({
         userId: user.id,
@@ -464,7 +464,7 @@ export class AdminService {
   async getContentItems(
     page: number = 1,
     limit: number = 20,
-    type?: string
+    _type?: string
   ): Promise<{
     items: ContentManagementData[];
     total: number;

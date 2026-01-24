@@ -142,7 +142,8 @@ export class RecommendationEngine {
     priority: 'critical' | 'high' | 'medium' | 'low',
     ifrsStandard: 'S1' | 'S2'
   ): Recommendation {
-    const standardLabel = ifrsStandard === 'S1' ? 'sustainability' : 'climate';
+    // Standard label for future use
+    ifrsStandard === 'S1' ? 'sustainability' : 'climate';
 
     return {
       id: `rec-${gap.requirementId}-${Date.now()}`,
@@ -162,8 +163,8 @@ export class RecommendationEngine {
    */
   private generateIndustryRecommendations(
     industry: string,
-    gapAnalysis: any,
-    scores: any
+    _gapAnalysis: any,
+    _scores: any
   ): Recommendation[] {
     const industryContext = this.industryVariationsService.getIndustryContext(
       industry as any
