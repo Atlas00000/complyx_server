@@ -52,8 +52,11 @@ RUN pnpm install --prod --frozen-lockfile
 COPY --from=base /app/dist ./dist
 COPY --from=base /app/prisma ./prisma
 
-# Install Prisma CLI temporarily to generate client, then remove it
-RUN pnpm add -D prisma && pnpm db:generate && pnpm remove prisma
+# Install Prisma CLI for migrations (needed at runtime)
+RUN pnpm add -D prisma
+
+# Generate Prisma Client in production stage
+RUN npx prisma generate
 
 # Set permissions
 RUN chown -R nodejs:nodejs /app
@@ -69,4 +72,5 @@ ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["node", "dist/server.js"]
+# Run migrations before starting the server
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
