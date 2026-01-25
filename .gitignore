@@ -39,7 +39,8 @@ Thumbs.db
 .settings/
 
 # Prisma
-prisma/migrations/**/migration.sql
+# Note: Migration SQL files should be committed to git for deployments
+# prisma/migrations/**/migration.sql
 
 # Database
 *.db

@@ -50,6 +50,7 @@ RUN pnpm install --prod --frozen-lockfile
 
 # Copy built application
 COPY --from=base /app/dist ./dist
+# Copy entire prisma directory including migrations
 COPY --from=base /app/prisma ./prisma
 
 # Install Prisma CLI for migrations (needed at runtime)
