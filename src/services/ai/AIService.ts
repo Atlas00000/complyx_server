@@ -54,7 +54,23 @@ export class AIService {
         factCheck,
       };
     } catch (error) {
-      throw new Error(`AI chat error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Provide user-friendly error messages
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Check if it's a rate limit error
+      if (
+        errorMessage.includes('429') ||
+        errorMessage.toLowerCase().includes('quota') ||
+        errorMessage.toLowerCase().includes('rate limit')
+      ) {
+        throw new Error(
+          'AI service temporarily unavailable: The AI service has hit its rate limit. ' +
+          'The system will automatically retry, but you may need to wait a moment. ' +
+          'If this persists, please check your API quota or try again later.'
+        );
+      }
+      
+      throw new Error(`AI chat error: ${errorMessage}`);
     }
   }
 

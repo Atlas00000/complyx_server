@@ -115,7 +115,23 @@ export class RAGService {
         confidence,
       };
     } catch (error) {
-      throw new Error(`RAG generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Provide user-friendly error messages for rate limits
+      if (
+        errorMessage.includes('429') ||
+        errorMessage.toLowerCase().includes('quota') ||
+        errorMessage.toLowerCase().includes('rate limit') ||
+        errorMessage.toLowerCase().includes('temporarily unavailable')
+      ) {
+        throw new Error(
+          'Service temporarily unavailable: The AI service has hit its rate limit. ' +
+          'The system is automatically retrying. Please wait a moment and try again. ' +
+          'If this persists, the API quota may need to be increased or reset.'
+        );
+      }
+      
+      throw new Error(`RAG generation failed: ${errorMessage}`);
     }
   }
 
