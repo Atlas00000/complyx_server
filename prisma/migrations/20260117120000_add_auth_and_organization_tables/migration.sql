@@ -1,13 +1,34 @@
--- AlterTable: Update users table with auth fields
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT;
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "emailVerified" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "emailVerifiedAt" TIMESTAMP(3);
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "verificationToken" TEXT;
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "resetToken" TEXT;
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "resetTokenExpires" TIMESTAMP(3);
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastLoginAt" TIMESTAMP(3);
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "organizationId" TEXT;
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "roleId" TEXT;
+-- AlterTable: Update users table with auth fields (using DO blocks to check existence)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='passwordHash') THEN
+        ALTER TABLE "users" ADD COLUMN "passwordHash" TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='emailVerified') THEN
+        ALTER TABLE "users" ADD COLUMN "emailVerified" BOOLEAN NOT NULL DEFAULT false;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='emailVerifiedAt') THEN
+        ALTER TABLE "users" ADD COLUMN "emailVerifiedAt" TIMESTAMP(3);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='verificationToken') THEN
+        ALTER TABLE "users" ADD COLUMN "verificationToken" TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='resetToken') THEN
+        ALTER TABLE "users" ADD COLUMN "resetToken" TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='resetTokenExpires') THEN
+        ALTER TABLE "users" ADD COLUMN "resetTokenExpires" TIMESTAMP(3);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='lastLoginAt') THEN
+        ALTER TABLE "users" ADD COLUMN "lastLoginAt" TIMESTAMP(3);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='organizationId') THEN
+        ALTER TABLE "users" ADD COLUMN "organizationId" TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='roleId') THEN
+        ALTER TABLE "users" ADD COLUMN "roleId" TEXT;
+    END IF;
+END $$;
 
 -- CreateIndex
 CREATE UNIQUE INDEX IF NOT EXISTS "users_verificationToken_key" ON "users"("verificationToken");
@@ -85,10 +106,49 @@ CREATE INDEX IF NOT EXISTS "audit_logs_organizationId_idx" ON "audit_logs"("orga
 CREATE INDEX IF NOT EXISTS "audit_logs_resource_resourceId_idx" ON "audit_logs"("resource", "resourceId");
 CREATE INDEX IF NOT EXISTS "audit_logs_createdAt_idx" ON "audit_logs"("createdAt");
 
--- AddForeignKey
-ALTER TABLE "users" ADD CONSTRAINT IF NOT EXISTS "users_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "users" ADD CONSTRAINT IF NOT EXISTS "users_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "role_permissions" ADD CONSTRAINT IF NOT EXISTS "role_permissions_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "role_permissions" ADD CONSTRAINT IF NOT EXISTS "role_permissions_permissionId_fkey" FOREIGN KEY ("permissionId") REFERENCES "permissions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "audit_logs" ADD CONSTRAINT IF NOT EXISTS "audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "audit_logs" ADD CONSTRAINT IF NOT EXISTS "audit_logs_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- AddForeignKey (using DO blocks to check existence)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'users_organizationId_fkey'
+    ) THEN
+        ALTER TABLE "users" ADD CONSTRAINT "users_organizationId_fkey" 
+        FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'users_roleId_fkey'
+    ) THEN
+        ALTER TABLE "users" ADD CONSTRAINT "users_roleId_fkey" 
+        FOREIGN KEY ("roleId") REFERENCES "roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'role_permissions_roleId_fkey'
+    ) THEN
+        ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_roleId_fkey" 
+        FOREIGN KEY ("roleId") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'role_permissions_permissionId_fkey'
+    ) THEN
+        ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_permissionId_fkey" 
+        FOREIGN KEY ("permissionId") REFERENCES "permissions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'audit_logs_userId_fkey'
+    ) THEN
+        ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_userId_fkey" 
+        FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'audit_logs_organizationId_fkey'
+    ) THEN
+        ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_organizationId_fkey" 
+        FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
