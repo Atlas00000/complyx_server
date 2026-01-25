@@ -74,4 +74,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Run migrations before starting the server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+# First, resolve any failed migrations, then deploy new migrations
+CMD ["sh", "-c", "npx prisma migrate resolve --rolled-back 20260117120000_add_auth_and_organization_tables 2>/dev/null || true && npx prisma migrate deploy && node dist/server.js"]
