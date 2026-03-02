@@ -3,6 +3,8 @@ import { AIService } from '../services/ai/AIService';
 import { RAGService } from '../services/knowledge/ragService';
 import { buildConversationContext } from '../services/ai/utils/contextBuilder';
 import { streamToSSE } from '../services/ai/utils/streamingHandler';
+import { getAssessmentSummaryForUser } from '../services/assessment/assessmentSummaryService';
+import { processContextualMessage } from '../services/assessment/contextualAnswerService';
 import type { Message } from '../services/ai/interfaces/AIProvider';
 
 export interface ChatRequest {
@@ -12,6 +14,7 @@ export interface ChatRequest {
   useRAG?: boolean; // Enable RAG for context-aware responses
   ragTopK?: number;
   ragMinScore?: number;
+  userId?: string; // When present, inject latest assessment summary for personalized answers
 }
 
 export class ChatController {
@@ -25,15 +28,26 @@ export class ChatController {
 
   async chat(req: Request<{}, {}, ChatRequest>, res: Response): Promise<void> {
     try {
-      const { message, messages = [], stream = false, useRAG = false, ragTopK = 5, ragMinScore = 0.5 } = req.body;
+      const { message, messages = [], stream = false, useRAG = false, ragTopK = 5, ragMinScore = 0.5, userId } = req.body;
 
       if (!message || typeof message !== 'string') {
         res.status(400).json({ error: 'Message is required' });
         return;
       }
 
+      // Optional: inject latest assessment summary for personalized chat
+      const assessmentContext =
+        typeof userId === 'string' && userId
+          ? await getAssessmentSummaryForUser(userId)
+          : null;
+
+      // Week 8: capture assessment-relevant info from chat into contextual answers (fire-and-forget)
+      if (typeof userId === 'string' && userId && message.trim().length > 0) {
+        processContextualMessage(userId, message).catch(() => {});
+      }
+
       // Build conversation context
-      const context = buildConversationContext(messages, message);
+      const context = buildConversationContext(messages, message, 20, assessmentContext);
 
       // Check if AI service is available
       if (!this.aiService.isAvailable()) {
@@ -103,6 +117,7 @@ export class ChatController {
             model: response.model,
             usage: response.usage,
             ...(ragContext && { ragContext }),
+            ...(assessmentContext != null && assessmentContext.length > 0 && { assessmentContextUsed: true }),
           });
         } catch (error) {
           console.error('Chat error:', error);

@@ -1,10 +1,22 @@
 import { Router } from 'express';
 import { AssessmentController } from '../controllers/assessmentController';
 import { SessionController } from '../controllers/sessionController';
+import {
+  startInChatAssessment,
+  submitInChatAnswer,
+  getInChatAssessmentStatus,
+  getInChatAssessmentSummary,
+} from '../controllers/inChatAssessmentController';
 
 const router = Router();
 const assessmentController = new AssessmentController();
 const sessionController = new SessionController();
+
+// In-chat assessment (Week 1)
+router.post('/start', startInChatAssessment);
+router.post('/answer', submitInChatAnswer);
+router.get('/status/:assessmentId', getInChatAssessmentStatus);
+router.get('/summary/:assessmentId', getInChatAssessmentSummary);
 
 // Calculate assessment scores
 router.post('/scores/calculate', (req, res) => {

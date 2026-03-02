@@ -1,5 +1,6 @@
 import type { Message } from '../interfaces/AIProvider';
 import { buildConversation, limitContextWindow } from './prompts';
+import { CONTEXTUAL_ASSESSMENT_PROMPT_ADDITION } from '../prompts/chatPrompt';
 
 export interface ConversationContext {
   messages: Message[];
@@ -9,12 +10,14 @@ export interface ConversationContext {
 }
 
 /**
- * Build conversation context from messages
+ * Build conversation context from messages.
+ * If assessmentContext is provided (e.g. user's latest assessment summary), it is appended to the system prompt.
  */
 export function buildConversationContext(
   messages: Message[],
   newUserMessage?: string,
-  maxContextLength: number = 20
+  maxContextLength: number = 20,
+  assessmentContext?: string | null
 ): ConversationContext {
   // Add new user message if provided
   const conversationMessages = newUserMessage
@@ -22,7 +25,18 @@ export function buildConversationContext(
     : messages;
 
   // Build conversation with system prompt
-  const conversationWithSystem = buildConversation(conversationMessages);
+  let conversationWithSystem = buildConversation(conversationMessages);
+
+  // Inject assessment context into system prompt when provided
+  if (assessmentContext && assessmentContext.trim()) {
+    conversationWithSystem = conversationWithSystem.map((msg) => {
+      if (msg.role === 'system') {
+        const withContext = `${msg.content}\n\n[Assessment context]\n${assessmentContext.trim()}`;
+        return { ...msg, content: `${withContext}\n${CONTEXTUAL_ASSESSMENT_PROMPT_ADDITION}` };
+      }
+      return msg;
+    });
+  }
 
   // Limit context window
   const limitedMessages = limitContextWindow(conversationWithSystem, maxContextLength);

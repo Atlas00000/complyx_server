@@ -245,15 +245,13 @@ export class QuestionOptimizer {
   }
 
   /**
-   * Optimize question format based on question content
+   * Optimize question format based on question content.
+   * When content clearly suggests a format (e.g. "Does..." → yes-no), prefer that over a generic open-ended.
    */
   optimizeFormat(question: QuestionNode): QuestionFormat {
-    // If format already specified, use it
-    if (question.format) {
-      return question.format;
-    }
-
     const questionLower = question.question.toLowerCase();
+
+    // Content-based detection first (can override open-ended for better UX)
 
     // Yes/No questions
     if (
@@ -291,8 +289,8 @@ export class QuestionOptimizer {
       return 'scale';
     }
 
-    // Open-ended questions (default)
-    return 'open-ended';
+    // Fallback: use existing format if set, otherwise open-ended
+    return (question.format as QuestionFormat) || 'open-ended';
   }
 
   /**

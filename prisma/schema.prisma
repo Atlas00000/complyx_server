@@ -50,16 +50,19 @@ model Session {
 }
 
 model Assessment {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId   String?
-  session     Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  status      String   @default("in_progress") // in_progress, completed, paused
-  progress    Int      @default(0) // 0-100
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  completedAt DateTime?
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId       String?
+  session         Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  status          String   @default("in_progress") // in_progress, completed, paused
+  progress        Int      @default(0) // 0-100
+  assessmentType  String   @default("full") // quick, micro, full
+  microTopic      String?  // governance, strategy, risk, metrics (only when assessmentType = micro)
+  totalQuestions  Int      @default(0) // number of questions in this assessment run
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
 
   answers Answer[]
   scores  Score[]
@@ -80,21 +83,22 @@ model QuestionCategory {
 }
 
 model Question {
-  id          String   @id @default(uuid())
-  categoryId  String
-  category    QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  text        String
-  type        String   @default("text") // text, multiple_choice, yes_no, scale
-  options     String?  // JSON string for multiple choice options
-  ifrsStandard String  // S1 or S2
-  requirement String?  // Specific IFRS requirement reference
-  weight      Float    @default(1.0) // Importance weight for scoring
-  order       Int      @default(0) // Display order
-  phase       String   @default("quick") // quick, detailed, followup
-  isActive    Boolean  @default(true)
-  skipLogic   String?  // JSON string for conditional logic
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  categoryId   String
+  category     QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  text         String
+  type         String   @default("text") // text, multiple_choice, yes_no, scale
+  options      String?  // JSON string for multiple choice options + scores
+  ifrsStandard String   // S1 or S2
+  requirement  String?  // Specific IFRS requirement reference
+  weight       Float    @default(1.0) // Importance weight for scoring
+  order        Int      @default(0) // Display order
+  phase        String   @default("quick") // quick, detailed, followup
+  questionSet  String?  // JSON array: ["quick","full","micro_governance"] - which assessment types include this question
+  isActive     Boolean  @default(true)
+  skipLogic    String?  // JSON string for conditional logic
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   answers Answer[]
 

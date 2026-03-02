@@ -703,15 +703,21 @@ export class AssessmentFlowEngine {
   }
 
   /**
-   * Get questions for progressive disclosure (broad to specific)
+   * Get questions for progressive disclosure (broad to specific).
+   * Uses the provided context to exclude answered questions and check dependencies.
    */
-  getProgressiveQuestions(_context: AssessmentContext, level: 'broad' | 'medium' | 'specific'): QuestionNode[] {
-    const candidates = this.getCandidateQuestions();
-    
+  getProgressiveQuestions(context: AssessmentContext, level: 'broad' | 'medium' | 'specific'): QuestionNode[] {
+    const candidates: QuestionNode[] = [];
+    for (const [_id, q] of this.questionGraph.entries()) {
+      if (context.answeredQuestions.has(q.id)) continue;
+      if (q.dependsOn && q.dependsOn.length > 0 && !q.dependsOn.every(depId => context.answeredQuestions.has(depId))) continue;
+      candidates.push(q);
+    }
+
     return candidates.filter(q => {
-      // Broad questions: high-level, no dependencies, high priority
+      // Broad questions: high-level, high or medium priority (first-tier disclosure)
       if (level === 'broad') {
-        return q.priority === 'high' && (!q.dependsOn || q.dependsOn.length === 0);
+        return q.priority === 'high' || q.priority === 'medium';
       }
       
       // Medium questions: some dependencies, medium priority

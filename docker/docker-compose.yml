@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     container_name: complyx-postgres
     restart: unless-stopped
     environment:
@@ -42,7 +42,7 @@ services:
       - "log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h "
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: complyx-redis
     restart: unless-stopped
     ports:
