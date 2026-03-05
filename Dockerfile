@@ -36,4 +36,5 @@ EXPOSE 3001
 ENV PORT=3001
 
 # Run migrations then start server (for Railway etc.)
-CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy && exec node dist/server.js"]
+# .bin/prisma is a shell script — run it with sh, not node
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node dist/server.js"]
