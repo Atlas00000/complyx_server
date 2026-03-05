@@ -21,6 +21,9 @@ FROM node:20-alpine AS runner
 
 ENV NODE_ENV=production
 
+# OpenSSL for Prisma engine detection (avoids "failed to detect libssl" warning)
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs
@@ -30,6 +33,9 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+
+# So appuser can run prisma migrate deploy (writes to node_modules/.pnpm/...)
+RUN chown -R appuser:nodejs /app
 
 USER appuser
 EXPOSE 3001
