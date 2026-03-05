@@ -10,6 +10,7 @@ import scrapingRoutes from './scraping';
 import authRoutes from './auth';
 import adminRoutes from './admin';
 import dashboardRoutes from './dashboard';
+import telemetryRoutes from './telemetry';
 
 export const setupRoutes = (app: Express): void => {
   // Authentication API routes
@@ -44,4 +45,7 @@ export const setupRoutes = (app: Express): void => {
   
   // Dashboard API routes
   app.use('/api/dashboard', dashboardRoutes);
+
+  // Telemetry (client errors / logs)
+  app.use('/api/telemetry', telemetryRoutes);
 };

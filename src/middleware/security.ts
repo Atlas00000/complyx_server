@@ -52,6 +52,15 @@ export const chatLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const telemetryMax = isDevelopment ? 200 : 100;
+export const telemetryLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: telemetryMax,
+  message: 'Too many telemetry requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * Security Headers Middleware (Helmet)
  */
@@ -210,10 +219,25 @@ export const xssProtection = (req: Request, _res: Response, next: NextFunction):
 };
 
 /**
- * CORS Configuration (if not already configured)
+ * CORS Configuration (if not already configured).
+ * Normalizes origin (strip trailing slash) so it matches the browser's Origin header exactly.
  */
+function normalizeOrigin(url: string): string {
+  if (!url || typeof url !== 'string') return url;
+  return url.replace(/\/+$/, '');
+}
+
+const defaultOrigin = normalizeOrigin(
+  process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:3000'
+);
+
 export const corsConfig = {
-  origin: process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:3000',
+  origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean | string) => void) => {
+    const allowed = defaultOrigin;
+    if (!origin) return cb(null, allowed);
+    if (normalizeOrigin(origin) === allowed) return cb(null, origin);
+    return cb(null, false);
+  },
   credentials: true,
   optionsSuccessStatus: 200,
 };

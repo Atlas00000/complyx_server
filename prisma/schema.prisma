@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,198 +8,251 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
+  id                String        @id @default(uuid())
+  email             String        @unique
   name              String?
-  passwordHash      String?   // Nullable for OAuth users
-  emailVerified     Boolean   @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  passwordHash      String?
+  emailVerified     Boolean       @default(false)
   emailVerifiedAt   DateTime?
-  verificationToken String?   @unique
-  resetToken        String?   @unique
+  verificationToken String?       @unique
+  resetToken        String?       @unique
   resetTokenExpires DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
   lastLoginAt       DateTime?
-
-  // Relations
   organizationId    String?
-  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  roleId             String?
-  role               Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  sessions           Session[]
-  assessments        Assessment[]
-  auditLogs          AuditLog[]
+  roleId            String?
+  assessments       Assessment[]
+  auditLogs         AuditLog[]
+  sessions          Session[]
+  chatSessions      ChatSession[]
+  chatMessages      ChatMessage[]
+  organization      Organization? @relation(fields: [organizationId], references: [id])
+  role              Role?         @relation(fields: [roleId], references: [id])
 
   @@map("users")
 }
 
 model Session {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  startedAt  DateTime @default(now())
-  lastActive DateTime @default(now())
-  isActive   Boolean  @default(true)
-
+  id          String       @id @default(uuid())
+  userId      String
+  startedAt   DateTime     @default(now())
+  lastActive  DateTime     @default(now())
+  isActive    Boolean      @default(true)
   assessments Assessment[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
+model ChatSession {
+  id             String        @id @default(uuid())
+  userId         String
+  title          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  lastMessageAt  DateTime?
+  messages       ChatMessage[]
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id         String       @id @default(uuid())
+  sessionId  String
+  userId     String?
+  role       String
+  content    String
+  metadata   Json?
+  createdAt  DateTime     @default(now())
+  session    ChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user       User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}
+
 model Assessment {
-  id              String   @id @default(uuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId       String?
-  session         Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  status          String   @default("in_progress") // in_progress, completed, paused
-  progress        Int      @default(0) // 0-100
-  assessmentType  String   @default("full") // quick, micro, full
-  microTopic      String?  // governance, strategy, risk, metrics (only when assessmentType = micro)
-  totalQuestions  Int      @default(0) // number of questions in this assessment run
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  completedAt     DateTime?
+  id             String    @id @default(uuid())
+  userId         String
+  sessionId      String?
+  status         String    @default("in_progress")
+  progress       Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  completedAt    DateTime?
+  assessmentType String    @default("full")
+  microTopic     String?
+  totalQuestions Int       @default(0)
+  answers        Answer[]
+  session        Session?  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scores         Score[]
 
-  answers Answer[]
-  scores  Score[]
-
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
   @@map("assessments")
 }
 
 model QuestionCategory {
   id          String     @id @default(uuid())
-  name        String     @unique // governance, strategy, risk, metrics
+  name        String     @unique
   description String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-
-  questions Question[]
+  questions   Question[]
 
   @@map("question_categories")
 }
 
 model Question {
-  id           String   @id @default(uuid())
+  id           String           @id @default(uuid())
   categoryId   String
-  category     QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   text         String
-  type         String   @default("text") // text, multiple_choice, yes_no, scale
-  options      String?  // JSON string for multiple choice options + scores
-  ifrsStandard String   // S1 or S2
-  requirement  String?  // Specific IFRS requirement reference
-  weight       Float    @default(1.0) // Importance weight for scoring
-  order        Int      @default(0) // Display order
-  phase        String   @default("quick") // quick, detailed, followup
-  questionSet  String?  // JSON array: ["quick","full","micro_governance"] - which assessment types include this question
-  isActive     Boolean  @default(true)
-  skipLogic    String?  // JSON string for conditional logic
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  type         String           @default("text")
+  options      String?
+  ifrsStandard String
+  requirement  String?
+  weight       Float            @default(1.0)
+  order        Int              @default(0)
+  isActive     Boolean          @default(true)
+  skipLogic    String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  phase        String           @default("quick")
+  questionSet  String?
+  answers      Answer[]
+  category     QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  answers Answer[]
-
+  @@index([categoryId])
   @@map("questions")
 }
 
 model Answer {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   assessmentId String
-  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   questionId   String
-  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  value        String   // JSON string or text value
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  value        String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
+  @@index([assessmentId])
+  @@index([questionId])
   @@map("answers")
 }
 
 model Score {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   assessmentId String
+  category     String
+  score        Float
+  maxScore     Float      @default(100)
+  createdAt    DateTime   @default(now())
   assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  category     String   // governance, strategy, risk, metrics
-  score        Float    // 0-100
-  maxScore     Float    @default(100)
-  createdAt    DateTime @default(now())
 
   @@map("scores")
 }
 
 model Organization {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
-  slug        String   @unique
+  slug        String     @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  users      User[]
-  auditLogs  AuditLog[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  auditLogs   AuditLog[]
+  users       User[]
 
   @@map("organizations")
 }
 
 model Role {
-  id          String   @id @default(uuid())
-  name        String   @unique // Admin, Manager, User, Viewer
+  id          String           @id @default(uuid())
+  name        String           @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  users       User[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   permissions RolePermission[]
+  users       User[]
 
   @@map("roles")
 }
 
 model Permission {
-  id          String   @id @default(uuid())
-  name        String   @unique // e.g., "users:create", "assessments:read", "admin:access"
+  id          String           @id @default(uuid())
+  name        String           @unique
   description String?
-  resource    String   // users, assessments, admin, content
-  action      String   // create, read, update, delete, access
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
+  resource    String
+  action      String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   roles       RolePermission[]
 
   @@map("permissions")
 }
 
 model RolePermission {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   roleId       String
-  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permissionId String
+  createdAt    DateTime   @default(now())
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
   @@map("role_permissions")
 }
 
 model AuditLog {
-  id            String   @id @default(uuid())
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id             String        @id @default(uuid())
+  userId         String?
   organizationId String?
-  organization  Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  action        String   // create, update, delete, login, logout, etc.
-  resource      String   // user, assessment, content, etc.
-  resourceId    String?  // ID of the affected resource
-  details       String?  // JSON string with additional details
-  ipAddress     String?
-  userAgent     String?
-  createdAt     DateTime @default(now())
+  action         String
+  resource       String
+  resourceId     String?
+  details        String?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
 
-  @@map("audit_logs")
   @@index([userId])
   @@index([organizationId])
   @@index([resource, resourceId])
   @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ClientError {
+  id        String   @id @default(uuid())
+  message   String
+  stack     String?
+  code      String?
+  url       String?
+  userAgent String?
+  userId    String?
+  level     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("client_errors")
+}
+
+model ClientLog {
+  id        String   @id @default(uuid())
+  level     String
+  message   String
+  context   Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([level])
+  @@map("client_logs")
 }

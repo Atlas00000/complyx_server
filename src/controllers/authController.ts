@@ -5,6 +5,8 @@ import { emailService } from '../services/auth/emailService';
 import { sessionManagementService } from '../services/auth/sessionManagementService';
 import { auditService } from '../services/auth/auditService';
 import { rbacService } from '../services/auth/rbacService';
+import { REFRESH_TOKEN_COOKIE_NAME, getRefreshTokenCookieOptions, ACCESS_TOKEN_TTL_SECONDS } from '../config/authConfig';
+import { revokeToken } from '../services/auth/tokenBlacklistService';
 
 export interface RegisterRequest {
   email: string;
@@ -189,6 +191,16 @@ export class AuthController {
         organizationId: user.organizationId || undefined,
       });
 
+      // Set HttpOnly refresh token cookie (access token remains in JSON response)
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (tokens.refreshToken) {
+        res.cookie(
+          REFRESH_TOKEN_COOKIE_NAME,
+          tokens.refreshToken,
+          getRefreshTokenCookieOptions(isProduction)
+        );
+      }
+
       // Get user role and permissions
       const role = await rbacService.getUserRole(user.id);
 
@@ -233,6 +245,7 @@ export class AuthController {
       if (token) {
         try {
           const payload = authService.verifyToken(token);
+          await revokeToken(token, ACCESS_TOKEN_TTL_SECONDS);
           const sessionId = req.body.sessionId || req.query.sessionId;
 
           if (sessionId && typeof sessionId === 'string') {
@@ -253,6 +266,13 @@ export class AuthController {
           // Token invalid, but still return success
         }
       }
+
+      // Clear refresh token cookie
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.clearCookie(
+        REFRESH_TOKEN_COOKIE_NAME,
+        getRefreshTokenCookieOptions(isProduction)
+      );
 
       res.json({ message: 'Logout successful' });
     } catch (error) {
@@ -420,19 +440,16 @@ export class AuthController {
   }
 
   /**
-   * Get current user
+   * Get current user (requires requireAuth middleware to have set req.user)
    */
   async getCurrentUser(req: Request, res: Response): Promise<void> {
     try {
-      const authHeader = req.headers.authorization;
-      const token = authService.extractTokenFromHeader(authHeader);
-
-      if (!token) {
+      const payload = req.user;
+      if (!payload) {
         res.status(401).json({ error: 'Authentication required' });
         return;
       }
 
-      const payload = authService.verifyToken(token);
       const user = await userService.getUserById(payload.userId);
 
       if (!user) {
@@ -451,23 +468,21 @@ export class AuthController {
         },
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('expired')) {
-        res.status(401).json({ error: 'Token expired' });
-        return;
-      }
-      res.status(401).json({ error: 'Invalid token' });
+      console.error('Get current user error:', error);
+      res.status(500).json({ error: 'Failed to get user' });
     }
   }
 
   /**
-   * Refresh access token
+   * Refresh access token (reads refresh token from HttpOnly cookie or body for backwards compatibility)
    */
   async refreshToken(req: Request, res: Response): Promise<void> {
     try {
-      const { refreshToken } = req.body;
+      const refreshToken =
+        (req.cookies && req.cookies[REFRESH_TOKEN_COOKIE_NAME]) || req.body?.refreshToken;
 
       if (!refreshToken) {
-        res.status(400).json({ error: 'Refresh token is required' });
+        res.status(401).json({ error: 'Refresh token is required' });
         return;
       }
 

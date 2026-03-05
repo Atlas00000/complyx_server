@@ -3,6 +3,7 @@ import { QuestionService } from '../services/question/questionService';
 import { AdaptiveQuestioning } from '../services/question/adaptiveQuestioning';
 import { QuestionTemplateService } from '../services/question/questionTemplates';
 import { PhaseService } from '../services/question/phaseService';
+import { cacheGet, cacheSet, cacheKey } from '../utils/redisCache';
 
 export class QuestionController {
   private questionService: QuestionService;
@@ -18,7 +19,7 @@ export class QuestionController {
   }
 
   /**
-   * Get all questions with optional filters
+   * Get all questions with optional filters. Unfiltered list is cached in Redis (60s TTL).
    */
   async getQuestions(req: Request, res: Response): Promise<void> {
     try {
@@ -31,7 +32,21 @@ export class QuestionController {
         filters.isActive = isActive === 'true';
       }
 
+      const hasFilters = Object.keys(filters).length > 0;
+      const cacheKeyQuestions = cacheKey(['questions', 'list']);
+
+      if (!hasFilters) {
+        const cached = await cacheGet<{ questions: unknown[] }>(cacheKeyQuestions);
+        if (cached?.questions) {
+          res.json(cached);
+          return;
+        }
+      }
+
       const questions = await this.questionService.getQuestions(filters);
+      if (!hasFilters) {
+        await cacheSet(cacheKeyQuestions, { questions }, 60);
+      }
       res.json({ questions });
     } catch (error) {
       console.error('Get questions error:', error);
@@ -62,11 +77,18 @@ export class QuestionController {
   }
 
   /**
-   * Get all question categories
+   * Get all question categories. Result cached in Redis (60s TTL).
    */
   async getCategories(_req: Request, res: Response): Promise<void> {
     try {
+      const key = cacheKey(['questions', 'categories']);
+      const cached = await cacheGet<{ categories: unknown[] }>(key);
+      if (cached?.categories) {
+        res.json(cached);
+        return;
+      }
       const categories = await this.questionService.getCategories();
+      await cacheSet(key, { categories }, 60);
       res.json({ categories });
     } catch (error) {
       console.error('Get categories error:', error);

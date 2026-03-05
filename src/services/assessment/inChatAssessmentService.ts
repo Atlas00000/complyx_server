@@ -235,7 +235,7 @@ export class InChatAssessmentService {
 
     const questionIds = await getQuestionIdsForType(
       assessment.assessmentType as AssessmentType,
-      assessment.microTopic as MicroTopic | null
+      (assessment.microTopic ?? undefined) as MicroTopic | undefined
     );
     const answeredIds = new Set(
       (await prisma.answer.findMany({
@@ -293,7 +293,7 @@ export class InChatAssessmentService {
 
     const questionIds = await getQuestionIdsForType(
       assessment.assessmentType as AssessmentType,
-      assessment.microTopic as MicroTopic | null
+      (assessment.microTopic ?? undefined) as MicroTopic | undefined
     );
     const answers = await prisma.answer.findMany({
       where: { assessmentId },

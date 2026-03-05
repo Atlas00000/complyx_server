@@ -5,6 +5,25 @@ import { ProgressService, ProgressData } from '../services/assessment/progressSe
 import { GapIdentificationService, GapAnalysis } from '../services/compliance/gapIdentificationService';
 import { ComplianceMatrixService, ComplianceMatrix } from '../services/compliance/complianceMatrixService';
 
+/** After requireAuth, req.user is set. Resolve effective userId; 403 if path userId != authenticated user. */
+function getEffectiveUserId(req: Request): { userId: string } | { status: 401 } | { status: 403 } {
+  const user = req.user;
+  if (!user?.userId) {
+    return { status: 401 };
+  }
+  const paramUserId = req.params?.userId;
+  if (paramUserId !== undefined && paramUserId !== user.userId) {
+    return { status: 403 };
+  }
+  return { userId: user.userId };
+}
+
+const DASHBOARD_CODES = {
+  UNAUTHORIZED: 'DASHBOARD_UNAUTHORIZED',
+  FORBIDDEN: 'DASHBOARD_FORBIDDEN',
+  ERROR: 'DASHBOARD_ERROR',
+} as const;
+
 export interface DashboardData {
   userId: string;
   assessmentId?: string;
@@ -64,13 +83,17 @@ export class DashboardController {
    */
   async getDashboardData(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id || req.params.userId;
-      const { assessmentId } = req.query;
-
-      if (!userId) {
-        res.status(401).json({ error: 'User ID required' });
+      const resolved = getEffectiveUserId(req);
+      if ('status' in resolved) {
+        if (resolved.status === 401) {
+          res.status(401).json({ error: 'Authentication required', code: DASHBOARD_CODES.UNAUTHORIZED });
+          return;
+        }
+        res.status(403).json({ error: 'Access denied', code: DASHBOARD_CODES.FORBIDDEN });
         return;
       }
+      const { userId } = resolved;
+      const { assessmentId } = req.query;
 
       // Get the most recent assessment or specified assessment
       let assessment;
@@ -169,46 +192,36 @@ export class DashboardController {
         ? (assessment.answers[0]?.question?.ifrsStandard as 'S1' | 'S2') || 'S1'
         : 'S1';
 
-      // Calculate scores
-      const readinessScore = await this.scoringService.calculateAssessmentScore(
-        answers,
-        ifrsStandard
-      );
-
-      // Calculate progress
       const answeredQuestionIds = assessment.answers.map((a) => a.questionId);
-      const progress = await this.progressService.calculateProgress(
-        answeredQuestionIds,
-        ifrsStandard
-      );
 
-      // Generate compliance matrix
-      const complianceMatrix = await this.complianceMatrixService.generateComplianceMatrix(
-        ifrsStandard,
-        answers
-      );
+      // Run score, progress, compliance, and gap in parallel (all depend only on answers + ifrsStandard)
+      const [readinessScore, progress, complianceMatrix, gapAnalysis] = await Promise.all([
+        this.scoringService.calculateAssessmentScore(answers, ifrsStandard),
+        this.progressService.calculateProgress(answeredQuestionIds, ifrsStandard),
+        this.complianceMatrixService.generateComplianceMatrix(ifrsStandard, answers),
+        this.gapIdentificationService.identifyGaps(ifrsStandard, answers),
+      ]);
 
-      // Perform gap analysis
-      const gapAnalysis = await this.gapIdentificationService.identifyGaps(
-        ifrsStandard,
-        answers
-      );
-
-      // Get recent activity (last 10 assessments)
-      const recentAssessments = await prisma.assessment.findMany({
-        where: {
-          userId,
-        },
-        orderBy: {
-          updatedAt: 'desc',
-        },
-        take: 10,
-        select: {
-          id: true,
-          status: true,
-          updatedAt: true,
-        },
-      });
+      // Run recent activity and historical trends in parallel (independent of each other)
+      const [recentAssessments, historicalAssessments] = await Promise.all([
+        prisma.assessment.findMany({
+          where: { userId },
+          orderBy: { updatedAt: 'desc' },
+          take: 10,
+          select: { id: true, status: true, updatedAt: true },
+        }),
+        prisma.assessment.findMany({
+          where: { userId, status: 'completed' },
+          orderBy: { completedAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            createdAt: true,
+            progress: true,
+            scores: { select: { score: true } },
+          },
+        }),
+      ]);
 
       const recentActivity = recentAssessments.map((a) => ({
         id: a.id,
@@ -217,28 +230,12 @@ export class DashboardController {
         assessmentId: a.id,
       }));
 
-      // Get historical trends (last 5 assessments with scores)
-      const historicalAssessments = await prisma.assessment.findMany({
-        where: {
-          userId,
-          status: 'completed',
-        },
-        orderBy: {
-          completedAt: 'desc',
-        },
-        take: 5,
-        include: {
-          scores: true,
-        },
-      });
-
       const historicalTrends = {
         assessments: historicalAssessments.map((a) => {
-          // Calculate average score from category scores
-          const avgScore = a.scores.length > 0
-            ? a.scores.reduce((sum, s) => sum + s.score, 0) / a.scores.length
-            : 0;
-
+          const avgScore =
+            a.scores.length > 0
+              ? a.scores.reduce((sum, s) => sum + s.score, 0) / a.scores.length
+              : 0;
           return {
             id: a.id,
             createdAt: a.createdAt,
@@ -263,7 +260,7 @@ export class DashboardController {
     } catch (error) {
       console.error('Get dashboard data error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ error: errorMessage, code: DASHBOARD_CODES.ERROR });
     }
   }
 
@@ -272,13 +269,17 @@ export class DashboardController {
    */
   async getReadinessScore(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id || req.params.userId;
-      const { assessmentId } = req.query;
-
-      if (!userId) {
-        res.status(401).json({ error: 'User ID required' });
+      const resolved = getEffectiveUserId(req);
+      if ('status' in resolved) {
+        if (resolved.status === 401) {
+          res.status(401).json({ error: 'Authentication required', code: DASHBOARD_CODES.UNAUTHORIZED });
+          return;
+        }
+        res.status(403).json({ error: 'Access denied', code: DASHBOARD_CODES.FORBIDDEN });
         return;
       }
+      const { userId } = resolved;
+      const { assessmentId } = req.query;
 
       let assessment;
       if (assessmentId) {
@@ -340,7 +341,7 @@ export class DashboardController {
     } catch (error) {
       console.error('Get readiness score error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ error: errorMessage, code: DASHBOARD_CODES.ERROR });
     }
   }
 
@@ -349,13 +350,17 @@ export class DashboardController {
    */
   async getProgress(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id || req.params.userId;
-      const { assessmentId } = req.query;
-
-      if (!userId) {
-        res.status(401).json({ error: 'User ID required' });
+      const resolved = getEffectiveUserId(req);
+      if ('status' in resolved) {
+        if (resolved.status === 401) {
+          res.status(401).json({ error: 'Authentication required', code: DASHBOARD_CODES.UNAUTHORIZED });
+          return;
+        }
+        res.status(403).json({ error: 'Access denied', code: DASHBOARD_CODES.FORBIDDEN });
         return;
       }
+      const { userId } = resolved;
+      const { assessmentId } = req.query;
 
       let assessment;
       if (assessmentId) {
@@ -403,7 +408,7 @@ export class DashboardController {
     } catch (error) {
       console.error('Get progress error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ error: errorMessage, code: DASHBOARD_CODES.ERROR });
     }
   }
 
@@ -412,13 +417,17 @@ export class DashboardController {
    */
   async getGapAnalysis(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id || req.params.userId;
-      const { assessmentId, ifrsStandard } = req.query;
-
-      if (!userId) {
-        res.status(401).json({ error: 'User ID required' });
+      const resolved = getEffectiveUserId(req);
+      if ('status' in resolved) {
+        if (resolved.status === 401) {
+          res.status(401).json({ error: 'Authentication required', code: DASHBOARD_CODES.UNAUTHORIZED });
+          return;
+        }
+        res.status(403).json({ error: 'Access denied', code: DASHBOARD_CODES.FORBIDDEN });
         return;
       }
+      const { userId } = resolved;
+      const { assessmentId, ifrsStandard } = req.query;
 
       let assessment;
       if (assessmentId) {
@@ -487,7 +496,7 @@ export class DashboardController {
     } catch (error) {
       console.error('Get gap analysis error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ error: errorMessage, code: DASHBOARD_CODES.ERROR });
     }
   }
 
@@ -496,13 +505,17 @@ export class DashboardController {
    */
   async getComplianceMatrix(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id || req.params.userId;
-      const { assessmentId, ifrsStandard } = req.query;
-
-      if (!userId) {
-        res.status(401).json({ error: 'User ID required' });
+      const resolved = getEffectiveUserId(req);
+      if ('status' in resolved) {
+        if (resolved.status === 401) {
+          res.status(401).json({ error: 'Authentication required', code: DASHBOARD_CODES.UNAUTHORIZED });
+          return;
+        }
+        res.status(403).json({ error: 'Access denied', code: DASHBOARD_CODES.FORBIDDEN });
         return;
       }
+      const { userId } = resolved;
+      const { assessmentId, ifrsStandard } = req.query;
 
       let assessment;
       if (assessmentId) {
@@ -571,7 +584,7 @@ export class DashboardController {
     } catch (error) {
       console.error('Get compliance matrix error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ error: errorMessage, code: DASHBOARD_CODES.ERROR });
     }
   }
 }

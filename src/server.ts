@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { setupRoutes } from './routes';
 import {
@@ -8,6 +9,7 @@ import {
   authLimiter,
   adminLimiter,
   chatLimiter,
+  telemetryLimiter,
   sanitizeInput,
   xssProtection,
   securityLogger,
@@ -16,6 +18,8 @@ import {
 } from './middleware/security';
 import { requestLogger } from './middleware/requestLogger';
 import { logger } from './utils/logger';
+import './jobs/registerJobs';
+import { startJobs } from './jobs/scheduler';
 
 // Load .env file - dotenv will look for .env in current working directory and parent directories
 dotenv.config();
@@ -42,9 +46,10 @@ app.use(xssProtection);
 // CORS configuration
 app.use(cors(corsConfig));
 
-// Body parsing middleware
+// Body parsing and cookies (for refresh token cookie)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // Rate limiting - apply general limiter to all routes
 app.use('/api', apiLimiter);
@@ -53,6 +58,7 @@ app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter);
 app.use('/api/admin', adminLimiter);
 app.use('/api/chat', chatLimiter);
+app.use('/api/telemetry', telemetryLimiter);
 
 // Health check route
 app.get('/health', (_req: Request, res: Response) => {
@@ -66,6 +72,9 @@ app.get('/api', (_req: Request, res: Response) => {
 
 // Setup application routes
 setupRoutes(app);
+
+// Start scheduled jobs (retention cleanup runs every 24h)
+startJobs();
 
 // Initialize default roles and permissions on startup
 (async () => {

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/authController';
+import { requireAuth } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -43,8 +44,8 @@ router.post('/reset-password', (req, res) => {
   getAuthController().resetPassword(req, res);
 });
 
-// Get current user endpoint
-router.get('/me', (req, res) => {
+// Get current user endpoint (protected; checks token blacklist)
+router.get('/me', requireAuth, (req, res) => {
   getAuthController().getCurrentUser(req, res);
 });
 

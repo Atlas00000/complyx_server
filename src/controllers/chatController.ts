@@ -53,7 +53,8 @@ export class ChatController {
       if (!this.aiService.isAvailable()) {
         res.status(503).json({ 
           error: 'AI service is not configured',
-          provider: this.aiService.getProviderName()
+          code: 'AI_SERVICE_UNAVAILABLE',
+          provider: this.aiService.getProviderName(),
         });
         return;
       }
@@ -127,17 +128,24 @@ export class ChatController {
           if (errorMessage.includes('API key') || errorMessage.includes('not configured')) {
             res.status(503).json({ 
               error: 'AI service is not configured',
-              provider: this.aiService.getProviderName()
+              code: 'AI_SERVICE_UNAVAILABLE',
+              provider: this.aiService.getProviderName(),
             });
           } else {
-            res.status(500).json({ error: errorMessage });
+            res.status(500).json({ 
+              error: errorMessage,
+              code: 'CHAT_ERROR',
+            });
           }
         }
       }
     } catch (error) {
       console.error('Chat controller error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ 
+        error: errorMessage,
+        code: 'CHAT_ERROR',
+      });
     }
   }
 }
